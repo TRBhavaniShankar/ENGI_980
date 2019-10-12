@@ -1,0 +1,21 @@
+<html>
+    <header>
+        <title> Use-case for Logout </title> 
+    </header>
+    <body>
+            <h2> Logout </h2>
+            <h4><u>Subject:</u> The World Wide File System</h4>
+            <p><u>Actors involved:</u> The user, the web browser, Application server, Database
+            Requirements addressed: </p>
+            <li>As an user, I need to be able to logout anytime with the choice of committing/ saving the unsaved files.</li>
+            <p><u>Precondition:</u> The user has logged in already.</p>
+            <p><u>Typical flow:</u></p>
+                <p>1. The user requests the server to loggout from his account on WWFS application.</p>
+                <p>2. If the user has some unsaved data, the system prompts the user with a message to save the data or exit</p> 
+                <p>3. If user selects "save" then the changes will be saved and simultaneously the user id logged out</p>
+                <p>4. If the user picks "Exit", the system pops a message asking for double confirmation whether the user really wants to logg out with out saving<br></p> 
+                <p>5. If the user picks "Yes", the system terminates without saving the file</p> 
+                <p>6. If the user picks "No", then the system saves the file terminate<br>
+                <p><u>Postcondition:</u> "The user is logged out of the WWFS"</p>
+    </body>
+</html>
