@@ -3,37 +3,133 @@
         <title>Lexicon for WWFS</title>
     </header>
     <body>
-        <h3>Directory.</h3>
-        <p>&nbsp &nbsp &nbsp It is container element, which can contain many directories or files, or it 
-            can even be empty as well.</p>
+        <h2>Data Model</h2>
+        <p>This is the data model as the user experiences it, not the internal data model.</p>
         <h3>File.</h3>
-        <p>&nbsp &nbsp &nbsp File is a terminal element, which contains the data. It can be empty as well.</p>
-        <h3>Root.</h3>
-	    <p>&nbsp &nbsp &nbsp The initial file system element(directory), which is the ultimate of all the other file 
-            system elements.</p>
+        <p>&nbsp &nbsp &nbsp Files are either Directories or Data Files.</p>
+        <h3>Directory.</h3>
+        <p>&nbsp &nbsp &nbsp A File that contains a list of File Name/File Identifier pairs.</p>
+        <h3>Data File.</h3>
+        <p>&nbsp &nbsp &nbsp A File that contains a sequence of bytes.</p>
+        <h3>Root Directory.</h3>
+        <p>&nbsp &nbsp &nbsp The set of Files (at any point in time) forms a tree, the Root Directory is the root of this tree.
+        </p>
+        <h3>File Name</h3>
+        <p>&nbsp &nbsp &nbsp A File Name is a string of characters that identifies a File within a Directory.
+        </p>
+        <h3>File Identifier.</h3>
+        <p>&nbsp &nbsp &nbsp Each file is associated with a unique identifier called
+            its file ID.</p>
         <h3>Path.</h3>
-        <p>&nbsp &nbsp &nbsp The path which can be followed to find a directory or a file. This always starts from root.</p>
-        <h3>Create Directory.</h3>
-        <p>&nbsp &nbsp &nbsp Create new directory for the user.</p>
-        <h3>Create Directory.</h3> 
-        <p>&nbsp &nbsp &nbsp Create new file for the user.</p>
-        <h3>Load.</h3> 
-        <p>&nbsp &nbsp &nbsp Load the file from the directory to the user's system.</p>
-        <h3>Modified.</h3>
-        <p>&nbsp &nbsp &nbsp The user makes some changes to the existing file and the state of that file is referred 
-            to modified.</p>
-        <h3>Commit/save.</h3>
-        <p>&nbsp &nbsp &nbsp When the user creates a new file or modify the existing file it needs to be saved safely 
-            on to the WWFS database.</p>
-        <h3>Delete.</h3>
-        <p>&nbsp &nbsp &nbsp When the file or directory is not required by the user anymore, user can delete the file.</p>
+        <p>&nbsp &nbsp &nbsp A sequence of file names.  A path may identify
+            a file providing a route to that file starting at the Root Directory.
+        </p>
         <h3>File System Manager.</h3>
         <p>&nbsp &nbsp &nbsp The system which controls the activities of the file system.</p>
+        <p>[Is this needed.]</p>
         <h3>File transfer protocol.</h3>
         <p>&nbsp &nbsp &nbsp The rules and regulations used to control the flow of operation.</p>
+        <p>[Is this needed.]</p>
         <h3>Eventual consistency.</h3>
 	    <p>&nbsp &nbsp &nbsp It is a consistency model used in the distributed system which helps in achieving high 
             availability. This guarantees that if there are no new modifications committed to the file, then all the 
             access to that file will return the updated result.</p>
+        <p>[Is this needed.]</p>
+       <h2>Operations on the data model</h2>
+       <h3>Create Directory.</h3>
+       <p>&nbsp &nbsp &nbsp Create new Directory.</p>
+       <p>Parameters</p>
+       <ul>
+           <li>p : a Path</li>
+       </ul>
+       Result:
+       <ul>
+            <li>If p is not a valid path that leads to a directory, then Error.</li>
+            <li>Else if the directory already contains an entry with the given name, then Error.</li>
+            <li>Else if the user does not have permission to
+                change the directory, then Error. </li>
+            <li>Else a new empty directory is created and the directory at p is altered to contain a new entry mapping name n to the new directory.</li>
+        </ul> 
+       <h3>Create Data File.</h3> 
+       <p>&nbsp &nbsp &nbsp Create new Data File.</p>
+       <p>Parameters</p>
+       <ul>
+           <li>p : a Path</li>
+           <li>n : a File Name</li>
+       </ul>
+       Result:
+       <ul>
+            <li>If p is not a valid path that leads to a directory, then Error</li>
+            <li>Else if the directory already contains an entry with the given name, then Error</li>
+            <li>Else if the user does not have permission to
+                    change the directory, then Error. </li>
+            <li>Else a new empty Data File is created and the directory at p is altered to contain a new entry mapping name n to the new Data File.</li>
+        </ul> 
+       <h3>Load.</h3> 
+       <p>&nbsp &nbsp &nbsp Obtain the contents of a file</p>
+       <p>Parameters</p>
+       <ul>
+            <li>p : a Path</li>
+        </ul>
+        Result:
+        <ul>
+             <li>If p is not a valid path that leads to a File, then Error</li>
+             <li>Else if the user does not have read permission on the file, then Error.</li>
+             <li>Else the contents of the File are returned.</li>
+         </ul> 
+       <h3>Modify Data File.</h3>
+       <p>Parameters</p>
+       <ul>
+            <li>p : a Path</li>
+            <li>contents : a byte sequence</li>
+        </ul>
+        Result:
+        <ul>
+             <li>If p is not a valid path that leads to a Data File, then Error</li>
+             <li>Else if the user does not have write permission on the file, then Error.</li>
+             <li>Else the contents of the File are modified.</li>
+        </ul>
+
+        <h3>Move file</h3>
+        <p>Parameters</p>
+        <ul>
+            <li>p : a Path</li>
+            <li>q : another Path</li>
+            <li>n1 : a File Name.</li>
+        </ul>
+        Result:
+        <ul>
+             <li>If p is a prefix of q, then Error. (p is a prefix of q iff there exists a path p' so that q = p ^ p'.)</li>
+             <li>If p does not lead to a File, then Error.</li>
+             <li>Let f be the File Identifier for that File</li>
+             <li>If q does not lead to a Directory, then Error.</li>
+             <li>Let d1 be the directory q leads to.</li>
+             <li>Assert p is not empty</li>
+             <li>Let n0 be the last item of p and p0 be the rest of the items, so p = p0 ^ [n0]</li>
+             <li>Assert p0 is the path of a directory.</li>
+             <li>Let d0 be that directory.</li>
+             <li>If the user does not have write permission on the d0, then Error.</li>
+             <li>If the user does not have write permission on the d1, then Error.</li>
+             <li>If n1 already maps to a name in d1, then Error.</li>
+             <li>The mapping for (n0,f) is removed from d0.</li>
+             <li>The mapping (n1,f) is added to d1.</li>
+         </ul>
+       <h3>Delete File</h3>
+       <p>&nbsp &nbsp &nbsp Remove a file from the system.</p>
+       <p>Parameters:</p>
+       <ul>
+            <li>p : a Path</li>
+        </ul>
+        Result:
+        <ul>
+             <li>If p is empty, Error.</li>
+             <li>If p is does not lead to a File, then Error</li>
+             <li>Let fid be the identifier of that file.</li>
+             <li>Let n be the last item of p and p0 be the rest.</li>
+             <li>Assert p0 leads to a Directory.</li>
+             <li>Let d0 be that Directory.</li>
+             <li>If the user does not have write permission on d0, then Error.</li>
+             <li>Update d0 by removing (n,fid) from its contents.</li>
+        </ul>
     </body>
 </html>
