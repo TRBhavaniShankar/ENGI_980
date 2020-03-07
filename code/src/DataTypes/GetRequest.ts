@@ -1,6 +1,5 @@
 import {FileID} from './FileID';
 import {FileStatePair} from './FileStatePair';
-import express from 'express';
 
 export class GetRequestDT{
 
@@ -16,6 +15,6 @@ export class GetRequestDT{
         this.currentState = currentState;
     }
     
-
+    
 
 }

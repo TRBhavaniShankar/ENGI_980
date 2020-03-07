@@ -1,6 +1,6 @@
-import { GetRequestDT } from "./GetRequest";
-import {FileID} from './FileID';
-import {FileStatePair} from './FileStatePair';
+import { GetRequestDT } from "../DataTypes/GetRequest";
+import {FileID} from '../DataTypes/FileID';
+import {FileStatePair} from '../DataTypes/FileStatePair';
 
 export class mkGetRequest{
 

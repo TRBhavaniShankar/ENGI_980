@@ -14,7 +14,8 @@ import { CommitDT } from '../DataTypes/Commit';
 import { Update } from '../DataTypes/Update';
 import { FileContent } from '../DataTypes/Content';
 import { ResponseDT } from '../DataTypes/ResponseDT';
-import { mkGetRequest } from '../DataTypes/mkGetRequest';
+import { mkGetRequest } from '../helper/mkGetRequest';
+import { mkCommitRequest } from '../helper/mkCommitRequest';
 
 // Setup DB component
 var db = 'mongodb://localhost/GLIFSdb'; 
@@ -41,15 +42,15 @@ export let GetRequest = function(req : express.Request, res : express.Response, 
 
         if(user){
             GT.need.forEach(element => {
-                /*
+                /**
                  * Check if there exists a file with file state pair.
-                    
-                 if there doesn't exists such pair then,
-                Response: failure{ message : m }. This means that the request failed for some reason.
-                
-                if the pair exists
-                Response: update{ new_cid : cid1, update: updates, deletes: deletes, old_cid : cid0 }
-                        */
+                 * 
+                 * if there doesn't exists such pair then,
+                 * Response: failure{ message : m }. This means that the request failed for some reason.
+                 * 
+                 * if the pair exists
+                 * Response: update{ new_cid : cid1, update: updates, deletes: deletes, old_cid : cid0 }
+                 */
                 
                 fileElement.findOne({ element : String }, (error : Error, fileItem : fileElementType) => {
                     
@@ -72,8 +73,6 @@ export let GetRequest = function(req : express.Request, res : express.Response, 
                     });
             });
 
-
-
             Response = new ResponseDT("200", "Fetched data", "update", files);
 
             res.json(fileElement);
@@ -91,7 +90,7 @@ export let GetRequest = function(req : express.Request, res : express.Response, 
 export let CommitRequest = function(req: express.Request, res:express.Response, next : express.NextFunction){
 
     // req.body := SessionID, updates[], CID, FileStatePair 
-    var CMT : CommitDT= req.body.object;
+    var CMT : CommitDT= new mkCommitRequest(req.body.object).getClassInstance();
     // console.log(CMT);
     // console.log(req.body.object);
 
