@@ -4,20 +4,20 @@ import { CID } from "./CID";
 
 export class Update{
     
-    new_cid : CID;
-    update: Change[] = []; 
-    deletes: Delete[] = []; 
-    old_cid : CID;
+    new_cid : String;
+    changes : Change[]; 
+    deletes : Delete[]; 
+    old_cid : String;
 
-    constructor(new_cid : CID,  update: [Change], deletes: [Delete], old_cid : CID){
+    constructor(new_cid : String,  changes: Change[], deletes: Delete[], old_cid : String){
         this.new_cid = new_cid;
-        this.update = update;
+        this.changes = changes;
         this.deletes = deletes;
         this.old_cid = old_cid;
     }
 
-    getUpdate(){
-        return this.new_cid, this.update, this.deletes, this.old_cid;
+    getUpdate() : [String, Change[], Delete[], String]{
+        return [this.new_cid, this.changes, this.deletes, this.old_cid];
     }
     
 }

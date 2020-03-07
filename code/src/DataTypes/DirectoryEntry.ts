@@ -2,16 +2,16 @@ import { FileID } from './FileID'
 
 export class DirectoryEntry{
     
-    fid: FileID;
     name: string;
+    fid: FileID;
 
     constructor(name : string, fid : FileID) {
         this.fid = fid;
         this.name = name;
     }
 
-    getDirectoryEntry(){
-        return this.fid, this.name;
+    getDirectoryEntry() : [string, FileID]{
+        return [this.name, this.fid];
     }
 
 }

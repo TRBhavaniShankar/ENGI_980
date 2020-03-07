@@ -1,7 +1,7 @@
 import {DirectoryEntry} from './DirectoryEntry';
-import { Value } from './Value';
+import { fileState } from './Value';
 
-export class DirectoryValues implements Value{
+export class DirectoryValues implements fileState{
 
     entries: DirectoryEntry[] = [];
 

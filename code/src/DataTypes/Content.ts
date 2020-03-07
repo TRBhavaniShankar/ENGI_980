@@ -1,21 +1,24 @@
-import { Value } from './Value';
+import { fileState } from './Value';
 import { StateID } from './StateID';
 import { MetaData } from './MetaData';
+import { FileStatePair } from './FileStatePair';
 
-export class Content {
+export class FileContent {
     
     stid : StateID;
     metaData : MetaData;
-    value: Value;
+    value: fileState;
+    fileStatePair : FileStatePair;
 
-    constructor(stid : StateID, metaData : MetaData, value: Value){
+    constructor(stid : StateID, metaData : MetaData, value: fileState, fileStatePair : FileStatePair){
         this.metaData = metaData;
         this.stid = stid;
-        this.value =value;
+        this.value = value;
+        this.fileStatePair = fileStatePair;
     }
 
-    getContent(){
-        return this.stid, this.metaData, this.value;
+    getContent() : [StateID, MetaData, fileState]{
+        return [this.stid, this.metaData, this.value];
     }
 
 }

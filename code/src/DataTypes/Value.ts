@@ -1,5 +1,5 @@
-export interface Value{
-
+export interface fileState {
+    
     
 
 }

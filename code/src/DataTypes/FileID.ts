@@ -1,7 +1,14 @@
+import { Guid } from "guid-typescript";
+
 export class FileID{
     
-    constructor(){
+    public id: Guid;
+    constructor() {
+        this.id = Guid.create(); 
+    }
 
+    generateFileID() : String{
+        return String(this.id);
     }
 
 }

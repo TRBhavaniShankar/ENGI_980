@@ -18,9 +18,11 @@ app.use(expressValidator());
 
 // Fire controllers
 app.post("/login",userController.login);
+app.post("/loggout",userController.loggout);
 app.post("/signup",userController.signup);
 app.get("/get", fileOperController.GetRequest);
 app.post("/commit", fileOperController.CommitRequest);
+app.delete("/commit", fileOperController.CommitRequest);
 
 // Listen to a port
 app.listen(3000);

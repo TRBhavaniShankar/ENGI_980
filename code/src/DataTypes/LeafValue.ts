@@ -1,3 +1,5 @@
-export class LeafValue{
+import { fileState } from "./Value";
+
+export class LeafValue implements fileState{
     
 }

@@ -3,16 +3,16 @@ import { StateID } from "./StateID"
 
 export class FileStatePair {
 
-    fid: FileID;
-    stid: StateID;
+    fid: String;
+    stid: String;
     
-    constructor(fid: FileID, stid: StateID) {
+    constructor(fid: String, stid: String) {
         this.fid = fid;
         this.stid = stid;
     }
     
-    getFileStatePair() {
-        return this.fid, this.stid;
+    getFileStatePair() : [String, String]{
+        return [this.fid, this.stid];
     }
 }
 

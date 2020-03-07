@@ -8,8 +8,9 @@ export class Delete {
         this.fid = fid;
     }
 
-    delete(){
+    delete() : FileID{
         // have to write delete functionality
+        return this.fid;
     }
 
 }

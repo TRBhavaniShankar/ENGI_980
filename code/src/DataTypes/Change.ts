@@ -1,12 +1,9 @@
-import { FileID } from './FileID';
-import { Content } from './Content';
-
 export class Change {
     
-    fid: FileID;
-    content: Content;
+    fid: String;
+    content: String;
 
-    constructor(fid: FileID, content: Content){
+    constructor(fid: String, content: String){
         this.fid = fid;
         this.content = content;
     }

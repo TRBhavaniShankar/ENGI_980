@@ -9,7 +9,7 @@ var FileStatePair = { fid: FileID, stid: StateID };
 
 var data = { sid : SessionID, need: [FileID],  cid : CommitID, currentState:  [FileStatePair] } ;
 
- async function GetRequestTest() {
+ async function CommitRequestTest() {
   const response = await fetch('http://localhost:3000/commit', {
       method: 'POST', 
       headers: {
@@ -22,7 +22,7 @@ var data = { sid : SessionID, need: [FileID],  cid : CommitID, currentState:  [F
   console.log(db_json);
 }
 
-GetRequestTest().catch(error => {
+CommitRequestTest().catch(error => {
     console.log('error!');
     console.error(error);
 });
