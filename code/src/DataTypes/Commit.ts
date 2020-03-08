@@ -1,4 +1,3 @@
-import { SessionID } from "./SessionID"
 import { Update } from "./Update"
 import { FileStatePair } from "./FileStatePair"
 

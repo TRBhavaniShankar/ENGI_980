@@ -1,12 +1,11 @@
-// import { SessionID } from "./SessionID";
-// import { CID } from "./CID";
+import { Guid } from "guid-typescript";
 
 export class LoginDT{
 
-    sID: String;
-    cId: String;
+    sID: Guid;
+    cId: Guid;
 
-    constructor(sID: String, cId: String){
+    constructor(sID: Guid, cId: Guid){
         this.sID = sID;
         this.cId = cId;
     }

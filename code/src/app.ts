@@ -1,5 +1,4 @@
 import express from 'express';
-var mongoose = require('mongoose');
 import expressValidator from "express-validator";
 
 import * as userController from "./controllers/user";
@@ -20,7 +19,8 @@ app.use(expressValidator());
 app.post("/login",userController.login);
 app.post("/loggout",userController.loggout);
 app.post("/signup",userController.signup);
-app.get("/get", fileOperController.GetRequest);
+
+app.post("/get", fileOperController.GetRequest);
 app.post("/commit", fileOperController.CommitRequest);
 app.delete("/commit", fileOperController.CommitRequest);
 

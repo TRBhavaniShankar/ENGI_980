@@ -2,12 +2,10 @@ import express from 'express';
 import {default as UserAccount, userAccType} from "../Models/UserAccountSchema";
 import {default as Commit, CommitType} from "../Models/CommitSchema";
 import mongoose from 'mongoose';
-import { SessionID } from '../DataTypes/SessionID';
 import { CommitDT } from '../DataTypes/Commit';
-import { CID } from '../DataTypes/CID';
 import { LoginDT } from '../DataTypes/LoginDT';
 import { assert } from 'console';
-import { request } from 'http';
+import { Guid } from "guid-typescript";
 import { ResponseDT } from '../DataTypes/ResponseDT';
 
 var db = 'mongodb://localhost/GLIFSdb'; 
@@ -50,13 +48,11 @@ export let login = function(req: express.Request, res:express.Response, next: ex
 
                     if(user.isLoggedIn){
                         
-                        loginRes = new ResponseDT("201", "You are already logged in!!", "LoginDT",
-                            new LoginDT(user.sessionID, user.CommitID));
-
+                        loginRes = new ResponseDT("201", "You are already logged in!!", "LoginDT", new LoginDT(user.sessionID, user.CommitID));
 
                     }else{
 
-                        var session: String = new SessionID().generateSessionID();
+                        var session: Guid = Guid.create();
                         console.log(session);
 
                         UserAccount.updateOne({email: req.body.email}, { $set: { sessionID: session, isLoggedIn : true} }, (error: Error) =>{
@@ -98,7 +94,7 @@ export let signup = function(req: express.Request, res:express.Response, next: e
         }
         else{
 
-            var commitID : String = new CID().generateCID();
+            var commitID : Guid = Guid.create();
 
             const user = new UserAccount({
                 email: req.body.email,

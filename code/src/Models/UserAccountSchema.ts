@@ -1,23 +1,22 @@
 import mongoose from "mongoose";
-import { SessionID } from "../DataTypes/SessionID";
-import { CID } from "../DataTypes/CID";
+import { Guid } from "guid-typescript";
 
 export type userAccType = mongoose.Document & {
     email: String,
     password: String,
     identifier: {type: String, unique: true},
-    sessionID: String,
+    sessionID: Guid,
     isLoggedIn : Boolean,
-    CommitID: String
+    CommitID: Guid
 }
 
 const userAccountSchema = new mongoose.Schema({
         email: String,
         password: String,
         identifier: {type: String, unique: true},
-        sessionID: String,
+        sessionID: Number,
         isLoggedIn : Boolean,
-        CommitID: String
+        CommitID: Number
     }, {timestamps: true});
 
 const UserAccount = mongoose.model("UserAccount", userAccountSchema);

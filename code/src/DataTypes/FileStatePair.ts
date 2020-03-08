@@ -1,18 +1,21 @@
-import { FileID } from "./FileID"
-import { StateID } from "./StateID"
+import { Guid } from "guid-typescript";
 
 export class FileStatePair {
 
-    fid: String;
-    stid: String;
+    fid: Guid;
+    stid: Guid;
     
-    constructor(fid: String, stid: String) {
+    constructor(fid: Guid, stid: Guid) {
         this.fid = fid;
         this.stid = stid;
     }
     
-    getFileStatePair() : [String, String]{
+    getFileStatePair() : [Guid, Guid]{
         return [this.fid, this.stid];
+    }
+
+    toString() : [String, String]{
+        return [String(this.fid) , String(this.stid)];
     }
 }
 
