@@ -11,6 +11,4 @@ export class Change {
         this.content = content;
     }
 
-    
-
 }

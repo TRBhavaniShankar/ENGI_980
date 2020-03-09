@@ -1,3 +1,5 @@
+
+
 export class Cache<U, T>{
 
     private hashTable : Map<U, T> = new Map<U, T>();
@@ -25,6 +27,12 @@ export class Cache<U, T>{
         }
     
         this.hashTable.set(key, value);
+      }
+
+    public delete(key: U) {
+    
+        this.hashTable.delete(key);
+
       }
 
 }

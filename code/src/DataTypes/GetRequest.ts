@@ -14,7 +14,6 @@ export class GetRequestDT{
     need: Guid[];
     cid : Guid;
     currentState: FileStatePair[];
-    
 
     constructor(sid : Guid, need: Guid[], cid : Guid, currentState:  FileStatePair[]) {
         this.sid= sid;
@@ -30,17 +29,19 @@ export class GetRequestDT{
      /**
       * 
       * @param ChangeCache : This is the cache which stores the change
-      * @param CommitCache : This is the cache which stores the Commit
+      * @param UpdateCache : This is the cache which stores the Commit
       * @param listOfCommits : This is the cache which stores the list of commit, which is a series in the array
       * @param user : This is the user email id
       */
 
-    public searchAndGetResponse(ChangeCache : Cache<Guid, FileContent>, CommitCache : Cache<Guid, Update>, 
+    public searchAndGetResponse(ChangeCache : Cache<Guid, FileContent>, UpdateCache : Cache<Guid, [Update, FileStatePair[]]>, 
         listOfCommits : Cache<String, Guid[]>, user : String) : [Update, Boolean] {
         
         var cids : Guid[] = listOfCommits.get(user);
         var new_cid : Guid;
-        var update : Update = CommitCache.get(this.cid);
+        
+        var updateCacheValue : [Update, FileStatePair] = UpdateCache.get(this.cid);
+        var update : Update = updateCacheValue[0];
         var isPresentInCache : Boolean = false;
 
         // Check if the cid provided by the user is already is the head of the commit
@@ -53,7 +54,7 @@ export class GetRequestDT{
             }else{
                 // The cid provided by the user was once the previous commits in the history
                 new_cid = cids[cids.length];
-                update = CommitCache.get(new_cid);
+                updateCacheValue = UpdateCache.get(new_cid);
             }
             isPresentInCache = true;
         }

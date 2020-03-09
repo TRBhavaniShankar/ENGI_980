@@ -3,7 +3,13 @@ import {FileStatePair} from '../DataTypes/FileStatePair';
 import { CommitDT } from "../DataTypes/Commit";
 import { Update } from "../DataTypes/Update";
 import { Guid } from "guid-typescript";
+import { Change } from "../DataTypes/Change";
+import { Delete } from "../DataTypes/Delete";
+import { FileContent } from "../DataTypes/Content";
 
+/**
+ * Make CommitRequest class
+ */
 export class mkCommitRequest{
 
     reqCommitDT : CommitDT;
@@ -14,15 +20,19 @@ export class mkCommitRequest{
 
     getClassInstance() : CommitDT{
 
-        var sid : String = this.reqCommitDT.sid;
-        var updates: Update[] = this.reqCommitDT.updates;
-        var currentState: FileStatePair[] = this.reqCommitDT.currentState;
+        var sid : Guid = this.reqCommitDT.sid;
+        var updates: Update[] = new mkUpdates(this.reqCommitDT.updates).getClassInstance();
+
+        var currentState: FileStatePair[] = new mkFileStatePairs(this.reqCommitDT.currentState).getClassInstance();
 
         return new CommitDT(sid, updates, currentState);
     }
 
 }
 
+/**
+ * Make GetRequest class
+ */
 export class mkGetRequest{
 
     reqGetRequestDT : GetRequestDT;
@@ -43,6 +53,9 @@ export class mkGetRequest{
 
 }
 
+/**
+ * Make FileStatePairs class
+ */
 class mkFileStatePairs{
 
     currentState: FileStatePair[];
@@ -61,6 +74,96 @@ class mkFileStatePairs{
         });
 
         return fStatePair;
+    }
+
+}
+
+/**
+ * Make Update class
+ */
+class mkUpdates{
+    updates: Update[];
+
+    constructor(updates: Update[]) {
+        this.updates = updates;
+    }
+
+    getClassInstance() : Update[]{
+
+        var updateClassInstance : Update[] = [];
+
+        this.updates.forEach(element => {
+
+            var changes : Change[] = new mkChanges(element.changes).getClassInstance();
+            var deletes : Delete[] = new mkDeletes(element.deletes).getClassInstance();
+
+            updateClassInstance.push(new Update(element.new_cid, changes, deletes, element.old_cid));
+        });
+
+        return updateClassInstance;
+    }
+}
+
+/**
+ * Make Change class
+ */
+class mkChanges{
+
+    changes : Change[];
+
+    constructor(changes : Change[]){
+        this.changes = changes;
+    }
+
+    getClassInstance() : Change[]{
+        var changesClass : Change[] = [];
+
+        this.changes.forEach(element => {
+            changesClass.push(new Change(element.fid, new mkFileContent(element.content).getClassInstance()));
+        });
+
+        return changesClass;
+    }
+}
+
+/**
+ * Make FileCOntent class
+ */
+class mkFileContent{
+
+    fileContent: FileContent;
+
+    constructor(fileContent: FileContent){
+        this.fileContent = fileContent;
+    }
+
+    getClassInstance() : FileContent {
+
+        return new FileContent(this.fileContent.stid, this.fileContent.metaData, this.fileContent.value);
+    }
+
+}
+
+/**
+ * Make Delete class
+ */
+class mkDeletes{
+
+    deletes : Delete[];
+
+    constructor(deletes : Delete[]){
+        this.deletes = deletes;
+    }
+
+    getClassInstance() : Delete[]{
+
+        var deleteResponce : Delete[] = [];
+
+        this.deletes.forEach(Element => {
+            deleteResponce.push(new Delete(Element.fid));
+        })
+
+        return deleteResponce;
     }
 
 }

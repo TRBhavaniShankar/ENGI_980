@@ -28,8 +28,9 @@ var urlencodedparser = bodyParser.urlencoded({extended: false});
 
 // Create cache objects for the file operations
 var ChangeCache : Cache<Guid, FileContent> = new Cache<Guid, FileContent>();
-var CommitCache : Cache<Guid, Update> = new Cache<Guid, Update>();
+var UpdateCache : Cache<Guid, [Update, FileStatePair[]]> = new Cache<Guid, [Update, FileStatePair[]]>();
 var listOfCommits : Cache<String, Guid[]> = new Cache<String, Guid[]>();
+var CacheCommits : Cache<Guid, CommitDT> = new Cache<Guid, CommitDT>();
 
 // API for the client to the request for the fileitem 
 export let GetRequest = function(req : express.Request, res : express.Response, next : express.NextFunction){
@@ -45,16 +46,18 @@ export let GetRequest = function(req : express.Request, res : express.Response, 
         }
 
         if(user){
-            var searchRes : [Update, Boolean] = GT.searchAndGetResponse(ChangeCache, CommitCache, listOfCommits, user.email);
+            var searchRes : [Update, Boolean] = GT.searchAndGetResponse(ChangeCache, UpdateCache, listOfCommits, user.email);
 
             if(searchRes[1]){
                 // Preasent in the cache
-                var responseObject : ResponseDT = new ResponseDT("200", "Succesful", "Update", Update);
+                Response = new ResponseDT("200", "Succesful", "Update", searchRes[0]);
             }else{
                 // Check in the DB
+                
             }
             
         }else{
+            // Unable to find the user
             Response = new ResponseDT("400", "Please Sign up. If you have already signed up please loggin!","",Object);
         }
         
@@ -67,12 +70,36 @@ export let GetRequest = function(req : express.Request, res : express.Response, 
 // API for the client to the request for to commit the changes for the fileitem
 export let CommitRequest = function(req: express.Request, res:express.Response, next : express.NextFunction){
 
+    var Response: ResponseDT;
+
     // req.body := SessionID, updates[], CID, FileStatePair 
     var CMT : CommitDT= new mkCommitRequest(req.body.object).getClassInstance();
 
-    console.log(CMT.toString());
+    UserAccount.findOne({SessionID : CMT.sid}, (error : Error, user : userAccType) => {
 
-    res.json("Received");
-    // console.log("Please make sure you have logged in..");
+        if(error){
+            return next(error);
+        }
+
+        if(user){
+            var CommitRes : [Update, Boolean, String] = CMT.CommitData(ChangeCache, UpdateCache, listOfCommits, user.email);
+
+            if(CommitRes[1]){
+                // Preasent in the cache
+                Response = new ResponseDT("200", "Succesful", "Update", CommitRes[0]);
+            }else{
+                // Check in the DB
+                
+            }
+            
+        }else{
+            // Unable to find the user
+            Response = new ResponseDT("400", "Please Sign up. If you have already signed up please loggin!","",Object);
+        }
+        
+        res.json(Response);
+        res.end;
+
+    });
     
 };

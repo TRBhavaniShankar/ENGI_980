@@ -1,14 +1,14 @@
-import { FileID } from './FileID';
+import { Guid } from "guid-typescript";
 
 export class Delete {
     
-    fid: FileID;
+    fid: Guid;
 
-    constructor(fid: FileID){
+    constructor(fid: Guid){
         this.fid = fid;
     }
 
-    delete() : FileID{
+    delete() : Guid{
         // have to write delete functionality
         return this.fid;
     }

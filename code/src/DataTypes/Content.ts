@@ -8,13 +8,11 @@ export class FileContent {
     stid : Guid;
     metaData : MetaData;
     value: fileState;
-    fileStatePair : FileStatePair;
 
-    constructor(stid : Guid, metaData : MetaData, value: fileState, fileStatePair : FileStatePair){
+    constructor(stid : Guid, metaData : MetaData, value: fileState){
         this.metaData = metaData;
         this.stid = stid;
         this.value = value;
-        this.fileStatePair = fileStatePair;
     }
 
     getContent() : [Guid, MetaData, fileState]{
