@@ -1,5 +1,3 @@
-
-
 export class Cache<U, T>{
 
     private hashTable : Map<U, T> = new Map<U, T>();

@@ -11,4 +11,8 @@ export class Change {
         this.content = content;
     }
 
+    toString() : string{
+        return "";
+    }
+
 }

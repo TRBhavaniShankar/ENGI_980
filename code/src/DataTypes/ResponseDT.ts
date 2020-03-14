@@ -1,20 +1,18 @@
-export class ResponseDT{
+import { LoginDT } from "./LoginDT";
+import { resp } from "./responsesInterface";
+import { Update } from "./Update";
 
-    status: string; 
+export class ResponseDT<Obj>{
+
+    status: Number; 
     message: string;
     className : string;
-    object : object;
+    object : Obj
 
-    constructor(status: string, message: string, className: string, object: object){
+    constructor(status: Number, message: string, className: string, object: Obj){
         this.status = status;
         this.message = message;
         this.className = className;
         this.object = object
-    }
-
-    getResponse(): [string, string, string, object]{
-
-        return [this.status, this.message, this.className, this.object];
-
     }
 }

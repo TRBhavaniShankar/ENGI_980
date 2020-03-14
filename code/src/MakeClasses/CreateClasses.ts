@@ -6,6 +6,9 @@ import { Guid } from "guid-typescript";
 import { Change } from "../DataTypes/Change";
 import { Delete } from "../DataTypes/Delete";
 import { FileContent } from "../DataTypes/Content";
+import { LoginDT } from "../DataTypes/LoginDT";
+import { ResponseDT } from "../DataTypes/ResponseDT";
+import { resp } from "../DataTypes/responsesInterface";
 
 /**
  * Make CommitRequest class
@@ -166,4 +169,30 @@ class mkDeletes{
         return deleteResponce;
     }
 
+}
+
+export class mkLogginDT{
+    
+    loginRes : LoginDT
+
+    constructor(loginRes : LoginDT ){
+        this.loginRes = loginRes;
+    }
+
+    getClassInstance(): LoginDT{
+        return new LoginDT(this.loginRes.sID, this.loginRes.cId);
+    }
+}
+
+export class mkResponseDT<type>{
+    
+    resp : ResponseDT<type>
+
+    constructor(resp : ResponseDT<type>){
+        this.resp = resp;
+    }
+
+    getClassInstance(): ResponseDT<type>{
+        return new ResponseDT<type>(this.resp.status, this.resp.message, this.resp.className, this.resp.object);
+    }
 }

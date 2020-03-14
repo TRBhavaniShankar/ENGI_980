@@ -14,9 +14,9 @@ const userAccountSchema = new mongoose.Schema({
         email: String,
         password: String,
         identifier: {type: String, unique: true},
-        sessionID: Number,
+        sessionID: Object,
         isLoggedIn : Boolean,
-        CommitID: Number
+        CommitID: Object
     }, {timestamps: true});
 
 const UserAccount = mongoose.model("UserAccount", userAccountSchema);

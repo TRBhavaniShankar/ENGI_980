@@ -1,8 +1,7 @@
 import express from 'express';
 import expressValidator from "express-validator";
 
-import * as userController from "./controllers/user";
-import * as fileOperController from "./controllers/fileOperations";
+import * as apis from "./controllers/APIs";
 
 // Initialize the node express server
 var app: express.Application = express();
@@ -16,13 +15,13 @@ app.use(express.json());
 app.use(expressValidator());
 
 // Fire controllers
-app.post("/login",userController.login);
-app.post("/loggout",userController.loggout);
-app.post("/signup",userController.signup);
+app.post("/login",apis.login);
+app.post("/loggout",apis.loggout);
+app.post("/signup",apis.signup);
 
-app.post("/get", fileOperController.GetRequest);
-app.post("/commit", fileOperController.CommitRequest);
-app.delete("/commit", fileOperController.CommitRequest);
+app.post("/get", apis.GetRequest);
+app.post("/commit", apis.CommitRequest);
+app.delete("/commit", apis.CommitRequest);
 
 // Listen to a port
 app.listen(3000);
