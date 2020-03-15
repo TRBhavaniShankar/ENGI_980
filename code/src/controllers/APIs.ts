@@ -34,7 +34,7 @@ var urlencodedparser = bodyParser.urlencoded({extended: false});
 var ChangeCache : Cache<Guid, FileContent> = new Cache<Guid, FileContent>();
 var UpdateCache : Cache<Guid, [Update, FileStatePair[]]> = new Cache<Guid, [Update, FileStatePair[]]>();
 var listOfCommits : Cache<String, Guid[]> = new Cache<String, Guid[]>();
-var CacheCommits : Cache<Guid, CommitDT> = new Cache<Guid, CommitDT>();
+var DataCache : Cache<Guid, [Update, FileStatePair[]]> = new Cache<Guid, [Update, FileStatePair[]]>();
 var userSessionPair : Cache<String, Guid> = new Cache<String, Guid>();
 
 // --------------------------- File Operations APIs ---------------------------
@@ -82,17 +82,25 @@ export let CommitRequest = function(req: express.Request, res:express.Response, 
 
     //UserAccount.findOne({SessionID : CMT.sid}, (error : Error, user : userAccType) => {
         try{
-            console.log(userSessionPair.get(req.body.email));
-            console.log("CMT.sid " + CMT.sid);
+
             var userSID : Guid = userSessionPair.get(req.body.email);
+            
             if(userSID["value"] == CMT.sid["value"]){
-                var CommitRes : [Update, Boolean, String] = new CommitOperations(CMT).CommitData(ChangeCache, UpdateCache, listOfCommits, req.body.email);
+
+                console.log("CMT " +CMT);
+
+                var CommitRes : [Update, Boolean, String] = new CommitOperations(CMT).CommitData(ChangeCache, UpdateCache, DataCache, listOfCommits, req.body.email);
+
+                console.log("CommitRes " +CommitRes);
 
                 if(CommitRes[1]){
                     // Preasent in the cache
                     res.json(new ResponseDT<Update>(200, "Succesful", "Update", CommitRes[0]));
                     res.end();
                 }else{
+
+                    console.log(CommitRes[1]);
+
                     // Check in the DB
                     // --- yet to write
                     res.json(new ResponseDT<Object>(500, "not available","",new Object()));

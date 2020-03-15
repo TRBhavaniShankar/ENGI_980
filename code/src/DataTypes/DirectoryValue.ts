@@ -9,4 +9,9 @@ export class DirectoryValues implements fileState{
         this.entries.push(entry);
     }
 
+    
+    toString():string{
+        return this.entries.toString();
+    }
+
 }

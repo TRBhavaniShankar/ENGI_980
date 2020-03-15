@@ -65,11 +65,11 @@ loginTest(login_data)
     var content : FileContent = new FileContent(stateID,metaData, val);
     var change : Change = new Change(fid,content);
     var del : Delete = new Delete(Object);
-    var update: Update = new Update(Guid.create(), [change], [del],login.cId);
+    var update: Update[] = [new Update(Guid.create(), [change], [del],login.cId)];
 
     //
-    var fileStatePair : FileStatePair = new FileStatePair(fid, stateID);
-    var commit : CommitDT = new CommitDT(login.sID,[update],[fileStatePair]);
+    var fileStatePair : FileStatePair[] = [new FileStatePair(fid, stateID)];
+    var commit : CommitDT = new CommitDT(login.sID,update,fileStatePair);
 
     var commit_data = {
         email: 'abc.abc@abc',

@@ -2,10 +2,14 @@ import { fileState } from "./Value";
 
 export class LeafValue implements fileState{
     
-    value : String;
+    value : string;
 
-    constructor(value : String){
+    constructor(value : string){
         this.value = value;
+    }
+
+    toString():string{
+        return this.value;
     }
 
 }

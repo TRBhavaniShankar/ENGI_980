@@ -12,7 +12,7 @@ export class Change {
     }
 
     toString() : string{
-        return "";
+        return this.fid.toString() + " " + this.content.toString();
     }
 
 }

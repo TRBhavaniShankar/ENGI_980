@@ -2,9 +2,9 @@ import { Guid } from "guid-typescript";
 
 export class Delete {
     
-    fid: Guid | any;
+    fid: Guid;
 
-    constructor(fid: Guid| any){
+    constructor(fid: Guid){
         this.fid = fid;
     }
 

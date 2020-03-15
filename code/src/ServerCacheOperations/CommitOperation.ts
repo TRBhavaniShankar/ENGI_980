@@ -18,6 +18,8 @@ export class CommitOperations{
         this.sid = commitObject.sid;
         this.updates = commitObject.updates;
         this.currentState = commitObject.currentState;
+
+        console.log(this.sid);
     }
 
 
@@ -33,7 +35,7 @@ export class CommitOperations{
      * @param user : This is the user email id
      */
 
-    public CommitData(ChangeCache : Cache<Guid, FileContent>, UpdateCache : Cache<Guid, [Update, FileStatePair[]]>, 
+    public CommitData(ChangeCache : Cache<Guid, FileContent>, UpdateCache : Cache<Guid, [Update, FileStatePair[]]>, DataCache : Cache<Guid, [Update, FileStatePair[]]> ,
         listOfCommits : Cache<String, Guid[]>, user : String) : [Update, Boolean, String] {
             
             var updatedData : Update | any;
@@ -42,6 +44,9 @@ export class CommitOperations{
             var cids : Guid[] = listOfCommits.get(user);
 
             var augmentedData : [Update, FileStatePair[]] = this.processingAugmentation(cids);
+            
+            console.log("augmentedData[0] "+augmentedData[0].toString());
+            console.log("augmentedData[1] "+augmentedData[1][0].fid["value"] + " "+ augmentedData[1][0].stid["value"]);
 
             // Check if the old commit id from the user is in the cache storage already
 
@@ -58,9 +63,26 @@ export class CommitOperations{
                     // Case 3 : If the server's head is still cid0 at the time the commit is received, 
                     // then the server can simply make the updates proposed and replies with a "success" response.
                     message = "success";
-
                     // Put the update into the commit cache
-                    UpdateCache.put(this.updates[0].new_cid, augmentedData);
+
+                    var tempNewData : [Update, FileStatePair[]] = UpdateCache.get(cids[cids.length - 1]);
+
+                    augmentedData[0].deletes.forEach(Element => {
+                        tempNewData[0].changes = tempNewData[0].changes.filter(fileterElement => {
+                            fileterElement.fid["value"] != Element.fid["value"];
+                        });
+
+                        tempNewData[1] = tempNewData[1].filter(fileterElement => {
+                            fileterElement.fid["value"] != Element.fid["value"];
+                        });
+
+                    });
+                    
+                    tempNewData[0].changes.concat(augmentedData[0].changes);
+                    tempNewData[0].deletes.concat(augmentedData[0].deletes);
+                    tempNewData[1].concat(augmentedData[1]);
+
+                    UpdateCache.put(this.updates[0].new_cid, tempNewData);
 
                     // Update the list of commits cache for the user, by setting the head of the commit to new_cid
                     cids.push(augmentedData[0].old_cid);
@@ -91,7 +113,13 @@ export class CommitOperations{
                 // a new head, CD1. It then replies with a "files" response. (The interpretation of the "files" response is as above.)
                 message = "files";
 
-                updatedData = 
+                var headOfCommit : [Update, FileStatePair[]] = UpdateCache.get(cids[cids.length - 1]);
+                headOfCommit = this.mergerUnknownFiles(headOfCommit, augmentedData);
+
+                UpdateCache.put(this.updates[0].new_cid, headOfCommit);
+
+                updatedData = headOfCommit[0];
+                
                 // ------ TO BE CODED -------
 
                 isPresentInCache = false;
@@ -156,5 +184,10 @@ export class CommitOperations{
         return [returnUpdate, pairs1];
     }
 
+    mergerUnknownFiles(headOfCommit : [Update, FileStatePair[]], augmentedData : [Update, FileStatePair[]]) : [Update, FileStatePair[]]{
+
+
+        return 
+    }
 
 }

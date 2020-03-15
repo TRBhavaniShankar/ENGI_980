@@ -19,4 +19,8 @@ export class FileContent {
         return [this.stid, this.metaData, this.value];
     }
 
+    toString() : string{
+        return this.stid.toString() + "," + this.metaData.toString() +","+ this.value.toString();
+    }
+
 }
