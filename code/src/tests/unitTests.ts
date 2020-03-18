@@ -9,7 +9,7 @@ import { CommitOperations } from "../ServerCacheOperations/CommitOperation";
 import * as apis from "../controllers/APIs";
 import { mkLogginDT, mkResponseDT } from "../MakeClasses/CreateClasses";
 import { LoginDT } from "../DataTypes/LoginDT";
-import { ResponseDT } from "../DataTypes/ResponseDT";
+import { ResponseDT } from "../Response/ResponseDT";
 import { Delete } from "../DataTypes/Delete";
 import { Change } from "../DataTypes/Change";
 import { LeafValue } from "../DataTypes/LeafValue";

@@ -5,17 +5,21 @@ import { FileContent } from './Content';
 import { fileElementType } from '../Models/FileElementSchema';
 import { Change } from './Change';
 import { Update } from './Update';
-import { ResponseDT } from './ResponseDT';
+import { ResponseDT } from '../Response/ResponseDT';
 import { Delete } from './Delete';
+import { SessionID } from './SessionID';
+import { FileID } from './FileID';
+import { CommitDT } from './Commit';
+import { CommitID } from './CommitID';
 
 export class GetRequestDT{
 
-    sid : Guid;
-    need: Guid[];
-    cid : Guid;
+    sid : SessionID;
+    need: FileID[];
+    cid : CommitID;
     currentState: FileStatePair[];
 
-    constructor(sid : Guid, need: Guid[], cid : Guid, currentState:  FileStatePair[]) {
+    constructor(sid : SessionID, need: FileID[], cid : CommitID, currentState:  FileStatePair[]) {
         this.sid= sid;
         this.need = need;
         this.cid = cid;
@@ -23,7 +27,7 @@ export class GetRequestDT{
     }
     
     public toString() : String{
-        return this.sid["value"] + " : " + this.cid["value"];
+        return this.sid + " : " + this.cid;
      }
 
 }

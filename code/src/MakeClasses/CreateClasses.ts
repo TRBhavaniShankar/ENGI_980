@@ -7,8 +7,12 @@ import { Change } from "../DataTypes/Change";
 import { Delete } from "../DataTypes/Delete";
 import { FileContent } from "../DataTypes/Content";
 import { LoginDT } from "../DataTypes/LoginDT";
-import { ResponseDT } from "../DataTypes/ResponseDT";
+import { ResponseDT } from "../Response/ResponseDT";
 import { resp } from "../DataTypes/responsesInterface";
+import { DirectoryValues } from "../DataTypes/DirectoryValue";
+import { SessionID } from "../DataTypes/SessionID";
+import { FileID } from "../DataTypes/FileID";
+import { CommitID } from "../DataTypes/CommitID";
 
 /**
  * Make CommitRequest class
@@ -23,7 +27,7 @@ export class mkCommitRequest{
 
     getClassInstance() : CommitDT{
 
-        var sid : Guid = this.reqCommitDT.sid;
+        var sid : SessionID = this.reqCommitDT.sessionid;
         var updates: Update[] = new mkUpdates(this.reqCommitDT.updates).getClassInstance();
 
         var currentState: FileStatePair[] = new mkFileStatePairs(this.reqCommitDT.currentState).getClassInstance();
@@ -46,9 +50,9 @@ export class mkGetRequest{
 
     getClassInstance() : GetRequestDT{
 
-        var sid : Guid = this.reqGetRequestDT.sid;
-        var need: Guid[] = this.reqGetRequestDT.need;
-        var cid : Guid = this.reqGetRequestDT.cid;
+        var sid : SessionID = this.reqGetRequestDT.sid;
+        var need: FileID[] = this.reqGetRequestDT.need;
+        var cid : CommitID = this.reqGetRequestDT.cid;
         var currentState: FileStatePair[] = new mkFileStatePairs(this.reqGetRequestDT.currentState).getClassInstance();
 
         return new GetRequestDT(sid, need, cid, currentState);
@@ -180,7 +184,7 @@ export class mkLogginDT{
     }
 
     getClassInstance(): LoginDT{
-        return new LoginDT(this.loginRes.sID, this.loginRes.cId);
+        return new LoginDT(this.loginRes.SessionID, this.loginRes.cId);
     }
 }
 
@@ -194,5 +198,27 @@ export class mkResponseDT<type>{
 
     getClassInstance(): ResponseDT<type>{
         return new ResponseDT<type>(this.resp.status, this.resp.message, this.resp.className, this.resp.object);
+    }
+}
+
+
+export class mkDirectoryValue{
+    
+    dirVal : DirectoryValues
+
+    constructor(dirVal : DirectoryValues){
+        this.dirVal = dirVal;
+    }
+
+    getClassInstance(): DirectoryValues{
+
+        var dirObj : DirectoryValues = new DirectoryValues();
+
+        this.dirVal.entries.forEach(ele => {
+            dirObj.push(ele);
+        });
+
+        return dirObj;
+        
     }
 }

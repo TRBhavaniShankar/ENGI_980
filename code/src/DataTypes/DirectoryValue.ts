@@ -5,13 +5,8 @@ export class DirectoryValues implements fileState{
 
     entries: DirectoryEntry[] = [];
 
-    constructor(entry : DirectoryEntry){
+    push(entry : DirectoryEntry){
         this.entries.push(entry);
-    }
-
-    
-    toString():string{
-        return this.entries.toString();
     }
 
 }

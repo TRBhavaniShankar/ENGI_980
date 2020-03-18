@@ -2,15 +2,16 @@ import { Delete } from "./Delete";
 import { Change } from "./Change";
 import { Guid } from "guid-typescript";
 import { resp } from "./responsesInterface";
+import { CommitID } from "./CommitID";
 
 export class Update implements resp{
     
-    new_cid : Guid;
+    new_cid : CommitID;
     changes : Change[]; 
     deletes : Delete[]; 
-    old_cid : Guid;
+    old_cid : CommitID;
 
-    constructor(new_cid : Guid,  changes: Change[], deletes: Delete[], old_cid : Guid){
+    constructor(new_cid : CommitID,  changes: Change[], deletes: Delete[], old_cid : CommitID){
         
         this.new_cid = new_cid;
         this.changes = changes;
@@ -18,7 +19,7 @@ export class Update implements resp{
         this.old_cid = old_cid;
     }
 
-    getUpdate() : [Guid, Change[], Delete[], Guid]{
+    getUpdate() : [CommitID, Change[], Delete[], CommitID]{
         return [this.new_cid, this.changes, this.deletes, this.old_cid];
     }
 

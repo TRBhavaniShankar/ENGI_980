@@ -5,22 +5,23 @@ import { Cache } from '../Cache/Cache';
 import { FileContent } from './Content';
 import { Change } from "./Change";
 import { Delete } from "./Delete";
+import { SessionID } from "./SessionID";
 
 export class CommitDT{
 
-    sid: Guid;
+    sessionid: SessionID;
     updates: Update[];
     currentState: FileStatePair[];
 
-    constructor(sid: Guid, updates: Update[], currentState: FileStatePair[]){
+    constructor(sessionid: SessionID, updates: Update[], currentState: FileStatePair[]){
 
-        this.sid = sid;
+        this.sessionid = sessionid;
         this.updates = updates;
         this.currentState = currentState;
     }
     
     toString() : String {
-        return "Commit DT : " + this.sid;
+        return "Commit DT : " + this.sessionid;
     }
 
 }

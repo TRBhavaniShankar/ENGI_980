@@ -1,6 +1,6 @@
-import { LoginDT } from "./LoginDT";
-import { resp } from "./responsesInterface";
-import { Update } from "./Update";
+import { LoginDT } from "../DataTypes/LoginDT";
+import { resp } from "../DataTypes/responsesInterface";
+import { Update } from "../DataTypes/Update";
 
 export class ResponseDT<Obj>{
 

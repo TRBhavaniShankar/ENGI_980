@@ -2,7 +2,7 @@ import fetch from 'node-fetch';
 import { LoginDT } from '../src/DataTypes/LoginDT';
 import { mkLogginDT, mkResponseDT } from '../src/MakeClasses/CreateClasses';
 import { resJSON } from '../src/client/jsonTypes';
-import { ResponseDT } from '../src/DataTypes/ResponseDT';
+import { ResponseDT } from '../src/Response/ResponseDT';
 import { Guid } from "guid-typescript";
 import { CommitDT } from '../src/DataTypes/Commit';
 import { Update } from '../src/DataTypes/Update';

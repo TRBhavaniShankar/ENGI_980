@@ -1,17 +1,19 @@
 import { Guid } from "guid-typescript";
+import { FileStatePair } from "./FileStatePair";
+import { FileID } from "./FileID";
 
 export class DirectoryEntry{
     
     name: string;
-    fid: Guid;
+    fID : FileID;
 
-    constructor(name : string, fid : Guid) {
-        this.fid = fid;
+    constructor(name : string, fID : FileID) {
+        this.fID = fID;
         this.name = name;
     }
 
-    getDirectoryEntry() : [string, Guid]{
-        return [this.name, this.fid];
+    getDirectoryEntry() : [string, FileID]{
+        return [this.name, this.fID];
     }
 
 }

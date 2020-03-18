@@ -12,7 +12,7 @@ import { FileStatePair } from '../DataTypes/FileStatePair';
 import { CommitDT } from '../DataTypes/Commit';
 import { Update } from '../DataTypes/Update';
 import { FileContent } from '../DataTypes/Content';
-import { ResponseDT } from '../DataTypes/ResponseDT';
+import { ResponseDT } from '../Response/ResponseDT';
 import { mkGetRequest, mkCommitRequest } from '../MakeClasses/CreateClasses';
 import { Cache } from '../Cache/Cache';
 import { Change } from '../DataTypes/Change';

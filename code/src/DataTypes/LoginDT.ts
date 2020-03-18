@@ -1,19 +1,22 @@
 import { Guid } from "guid-typescript";
 import { resp } from "./responsesInterface";
+import { FileID } from "./FileID";
+import { CommitID } from "./CommitID";
+import { SessionID } from "./SessionID";
 
 export class LoginDT implements resp{
 
-    sID: Guid;
-    cId: Guid;
+    SessionID: SessionID;
+    cId: CommitID;
 
-    constructor(sID: Guid, cId: Guid){
+    constructor(SessionID: SessionID, cId: CommitID){
         
-        this.sID = sID;
+        this.SessionID = SessionID;
         this.cId = cId;
     }
 
     toString(): string {
-        return this.sID.toString() +","+this.sID.toString();
+        return this.SessionID.toString() +","+this.cId.toString();
     }
 
 }

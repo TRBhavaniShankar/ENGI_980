@@ -49,7 +49,7 @@ import fetch from 'node-fetch';
 import { LoginDT } from '../DataTypes/LoginDT';
 import { mkLogginDT } from '../MakeClasses/CreateClasses';
 import { resJSON } from './jsonTypes';
-import { ResponseDT } from '../DataTypes/ResponseDT';
+import { ResponseDT } from '../Response/ResponseDT';
 import { Guid } from "guid-typescript";
 import { CommitDT } from '../DataTypes/Commit';
 import { Update } from '../DataTypes/Update';

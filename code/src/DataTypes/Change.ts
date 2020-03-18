@@ -1,12 +1,13 @@
 import { Guid } from "guid-typescript";
 import { FileContent } from "./Content";
+import { FileID } from "./FileID";
 
 export class Change {
     
-    fid: Guid;
+    fid: FileID;
     content: FileContent;
 
-    constructor(fid: Guid, content: FileContent){
+    constructor(fid: FileID, content: FileContent){
         this.fid = fid;
         this.content = content;
     }
