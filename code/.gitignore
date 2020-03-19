@@ -1,2 +1,4 @@
 node_modules/
 code/node_modules
+*.js
+*.map

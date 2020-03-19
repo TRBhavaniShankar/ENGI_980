@@ -1,3 +1,4 @@
+
 import { expect } from "chai";
 import { CommitDT } from "../DataTypes/Commit";
 import { FileContent } from "../DataTypes/Content";
@@ -42,8 +43,8 @@ var userSessionPair : Cache<String, SessionID> = new Cache<String, SessionID>();
 console.log("hey")
 console.log(RootStateID.toString());
 console.log("hey --")
-describe('Unt test function', function() : void{
-    it('test1', function() {
+describe('Unt test function', function() {
+    it('test', function() {
 
         // Create initial 
         var email: string = "abc.abc@abc";

@@ -1,7 +1,3 @@
-import { LoginDT } from "../DataTypes/LoginDT";
-import { resp } from "../DataTypes/responsesInterface";
-import { Update } from "../DataTypes/Update";
-
 export class ResponseDT<Obj>{
 
     status: Number; 

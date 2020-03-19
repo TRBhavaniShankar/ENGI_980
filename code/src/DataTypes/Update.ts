@@ -1,10 +1,10 @@
 import { Delete } from "./Delete";
 import { Change } from "./Change";
 import { Guid } from "guid-typescript";
-import { resp } from "./responsesInterface";
 import { CommitID } from "./CommitID";
+import { IResponse } from "../Response/ResponseObjects";
 
-export class Update implements resp{
+export class Update implements IResponse{
     
     new_cid : CommitID;
     changes : Change[]; 

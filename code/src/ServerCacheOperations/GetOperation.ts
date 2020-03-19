@@ -38,8 +38,7 @@ export class GetOperation{
       * @param listOfCommits : This is the cache which stores the list of commit, which is a series in the array
       */
 
-    public searchAndGetResponse(ChangeCache : Cache<FileID, FileContent>, 
-                                CommitCache : Cache<CommitID, [Update, FileStatePair[]]>, 
+    public searchAndGetResponse(CommitCache : Cache<CommitID, [Update, FileStatePair[]]>, 
                                 listOfCommits : CommitID[]) : 
     ResponseDT<Object> {
         

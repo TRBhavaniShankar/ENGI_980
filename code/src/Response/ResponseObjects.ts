@@ -1,5 +1,3 @@
-import { Update } from "../DataTypes/Update";
-
 export interface IResponse{
 
 }
@@ -26,13 +24,3 @@ export class Failure implements IResponse{
     }
 
 }
-
-export class FilesResp implements IResponse{
-
-    update : Update;
-
-    constructor(update : Update){
-        this.update = update
-    }
-
-} 

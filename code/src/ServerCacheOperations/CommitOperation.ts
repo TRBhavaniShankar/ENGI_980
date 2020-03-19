@@ -43,11 +43,9 @@ export class CommitOperations{
      * @param listOfCommits : This is the cache which stores the list of commit, which is a series in the array
      */
 
-    public commitData(ChangeCache : Cache<FileID, FileContent>, 
-                      CommitCache : Cache<CommitID, [Update, FileStatePair[]]>, 
-                      DataCache : Cache<Guid, [Update, FileStatePair[]]> ,
+    public commitData(CommitCache : Cache<CommitID, [Update, FileStatePair[]]>, 
                       listOfCommits : CommitID[]) : 
-    ResponseDT<Object> {
+    ResponseDT<IResponse> {
             
         var updatedData : Update ;  
         var cids : CommitID[] = listOfCommits;
@@ -101,16 +99,16 @@ export class CommitOperations{
                 listOfCommits.push(augmentedData[0].new_cid);
 
                 // Add the changes to the Change cache
-                augmentedData[0].changes.forEach(changeElement => {
-                    ChangeCache.put(changeElement.fid, changeElement.content);
-                });
+                // augmentedData[0].changes.forEach(changeElement => {
+                //     ChangeCache.put(changeElement.fid, changeElement.content);
+                // });
 
 
                 return new ResponseDT<Success>(200, "Successfully added the commit as the head of commit", "Success", new Success());
                 // ------ Done -------
 
             }
-            else{
+            else{ //
                 // Case 2 : If the server's head is not cdx, but it was in the past, then the server sends back a "files" 
                 // response to update the client from state cd0
 
