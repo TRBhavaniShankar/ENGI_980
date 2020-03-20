@@ -11,7 +11,7 @@ import { GetRequestDT } from '../DataTypes/GetRequest';
 import { FileID } from '../DataTypes/FileID';
 import { SessionID } from '../DataTypes/SessionID';
 import { CommitID } from '../DataTypes/CommitID';
-import { Failure } from '../Response/ResponseObjects';
+import { Failure, IResponse } from '../Response/ResponseObjects';
 
 export class GetOperation{
 
@@ -40,12 +40,12 @@ export class GetOperation{
 
     public searchAndGetResponse(CommitCache : Cache<CommitID, [Update, FileStatePair[]]>, 
                                 listOfCommits : CommitID[]) : 
-    ResponseDT<Object> {
+    ResponseDT<IResponse> {
         
         var cids : CommitID[] = listOfCommits;
         
         // Get the head of commits
-        var CommitCacheValue : [Update, FileStatePair] = CommitCache.get(cids[cids.length]);
+        var CommitCacheValue : [Update, FileStatePair] = CommitCache.get(cids[cids.length -1 ]);
         var update : Update = CommitCacheValue[0];
 
         // Check if the cid provided by the user is already is the head of the commit

@@ -8,7 +8,6 @@ import { Delete } from "../DataTypes/Delete";
 import { FileContent } from "../DataTypes/Content";
 import { LoginDT } from "../DataTypes/LoginDT";
 import { ResponseDT } from "../Response/ResponseDT";
-import { resp } from "../DataTypes/responsesInterface";
 import { DirectoryValues } from "../DataTypes/DirectoryValue";
 import { SessionID } from "../DataTypes/SessionID";
 import { FileID } from "../DataTypes/FileID";

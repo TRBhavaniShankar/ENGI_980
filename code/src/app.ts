@@ -15,9 +15,9 @@ app.use(express.json());
 app.use(expressValidator());
 
 // Fire controllers
-app.post("/login",apis.login);
-app.post("/loggout",apis.loggout);
-app.post("/signup",apis.signup);
+// app.post("/login",apis.login);
+// app.post("/loggout",apis.loggout);
+// app.post("/signup",apis.signup);
 
 app.post("/get", apis.GetRequest);
 app.post("/commit", apis.CommitRequest);

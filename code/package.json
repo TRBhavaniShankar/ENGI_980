@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node dist/app.js",
+    "test": "mocha",
     "dev": "nodemon src/app.ts",
     "build": "tsc -p ."
   },
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@types/express-validator": "^3.0.0",
-    "@types/mongoose": "^5.7.1",
+    "@types/mongoose": "^5.7.6",
     "@types/node-fetch": "^2.5.4",
     "body-parser": "^1.19.0",
     "ejs": "^3.0.1",

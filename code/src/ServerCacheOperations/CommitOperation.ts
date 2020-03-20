@@ -53,11 +53,8 @@ export class CommitOperations{
         var augmentedData : [Update, FileStatePair[]] = this.processingAugmentation(cids);
         
         console.log("augmentedData[0] "+augmentedData[0].toString());
-        console.log("augmentedData[1] "+augmentedData[1][0].fid.toString() + " "+ augmentedData[1][0].stid.toString());
 
         // Check if the new commit id from the user is in the cache storage already
-
-        var test : FileID = new FileID(Guid.create());
         
         if(augmentedData[0].new_cid == cids[cids.length - 1]){
             // Case 1 : If the server's head is cdx, it can simply reply with "success". 
@@ -76,24 +73,24 @@ export class CommitOperations{
 
                 // Put the update into the commit cache
 
-                var tempNewData : [Update, FileStatePair[]] = CommitCache.get(cids[cids.length - 1]);
+                //var tempNewData : [Update, FileStatePair[]] = CommitCache.get(cids[cids.length - 1]);
 
-                augmentedData[0].deletes.forEach(Element => {
-                    tempNewData[0].changes = tempNewData[0].changes.filter(fileterElement => {
-                        fileterElement.fid.isEqual(Element.fid);
-                    });
+                // augmentedData[0].deletes.forEach(Element => {
+                //     tempNewData[0].changes = tempNewData[0].changes.filter(fileterElement => {
+                //         fileterElement.fid.isEqual(Element.fid);
+                //     });
 
-                    tempNewData[1] = tempNewData[1].filter(fileterElement => {
-                        fileterElement.fid.isEqual(Element.fid);
-                    });
+                //     tempNewData[1] = tempNewData[1].filter(fileterElement => {
+                //         fileterElement.fid.isEqual(Element.fid);
+                //     });
 
-                });
+                // });
                 
-                tempNewData[0].changes.concat(augmentedData[0].changes);
-                tempNewData[0].deletes.concat(augmentedData[0].deletes);
-                tempNewData[1].concat(augmentedData[1]);
+                // tempNewData[0].changes.concat(augmentedData[0].changes);
+                // tempNewData[0].deletes.concat(augmentedData[0].deletes);
+                // tempNewData[1].concat(augmentedData[1]);
 
-                CommitCache.put(this.updates[0].new_cid, tempNewData);
+                CommitCache.put(this.updates[0].new_cid, augmentedData);
 
                 // Update the list of commits cache for the user, by setting the head of the commit to new_cid
                 listOfCommits.push(augmentedData[0].new_cid);

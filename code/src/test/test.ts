@@ -39,11 +39,11 @@ CommitCache.put(RootCommitID, [RootUpdate, [new FileStatePair(RootDirFid, RootSt
 
 var listOfCommits : CommitID[] = [RootCommitID];
 var userSessionPair : Cache<String, SessionID> = new Cache<String, SessionID>();
-console.log("hey")
+
 console.log(RootStateID.toString());
-console.log("hey --")
-describe('Unt test function', function() : void{
-    it('test1', function() {
+
+describe('app', function() : void{
+    it('test1', function() : void{
 
         // Create initial 
         var email: string = "abc.abc@abc";

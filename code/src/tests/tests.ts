@@ -23,6 +23,10 @@ import { Permissions } from "../DataTypes/Permissions";
 import { IResponse } from "../Response/ResponseObjects";
 import { DirectoryValues } from "../DataTypes/DirectoryValue";
 import { DirectoryEntry } from "../DataTypes/DirectoryEntry";
+import { GetOperation } from "../ServerCacheOperations/GetOperation";
+import { GetRequestDT } from "../DataTypes/GetRequest";
+
+var sessionID : SessionID = new SessionID(Guid.create());
 
 var RootCommitID : CommitID = new CommitID(Guid.create());
 var RootDirFid : FileID = new FileID(Guid.create());
@@ -39,41 +43,38 @@ var CommitCache : Cache<CommitID, [Update, FileStatePair[]]> = new Cache<CommitI
 CommitCache.put(RootCommitID, [RootUpdate, [new FileStatePair(RootDirFid, RootStateID)]]);
 
 var listOfCommits : CommitID[] = [RootCommitID];
-var userSessionPair : Cache<String, SessionID> = new Cache<String, SessionID>();
-console.log("hey")
+//var userSessionPair : Cache<String, SessionID> = new Cache<String, SessionID>();
 console.log(RootStateID.toString());
-console.log("hey --")
-describe('Unt test function', function() {
-    it('test', function() {
+console.log(CommitCache.get(RootCommitID))
 
-        // Create initial 
-        var email: string = "abc.abc@abc";
-        var commitID : CommitID = new CommitID(Guid.create());
-        var sessionID : SessionID = new SessionID(Guid.create());
-        
-        //
-        listOfCommits.push(commitID);
-        userSessionPair.put(email, sessionID);
+var GT : GetRequestDT = new GetRequestDT(sessionID, [], RootCommitID, [new FileStatePair(RootDirFid, RootStateID)]);
+var searchRes : ResponseDT<IResponse> = new GetOperation(GT).searchAndGetResponse(CommitCache, listOfCommits);
 
-        var login : LoginDT = new LoginDT(sessionID,commitID);
+console.log(searchRes.object);
+if(searchRes.status == 200){
+  var updateRep : Update = <Update> searchRes.object;
 
-        var fid : FileID = new FileID(Guid.create());
-        var stateID : StateID = new StateID(Guid.create());
-        var metaData : MetaData = new MetaData("user1",new Permissions("rwx"));
-        var val : LeafValue = new LeafValue("abc");
+  // Create new commit
+  var email: string = "abc.abc@abc";
+  var newCommitID : CommitID = new CommitID(Guid.create());
 
-        //
-        var content : FileContent = new FileContent(stateID,metaData, val);
-        var change : Change = new Change(fid,content);
-        var update: Update[] = [new Update(new CommitID(Guid.create()), [change], [],login.cId)];
+  var fid : FileID = new FileID(Guid.create());
+  var stateID : StateID = new StateID(Guid.create());
+  var metaData : MetaData = new MetaData("user1",new Permissions("rwx"));
+  var val : LeafValue = new LeafValue("abc");
 
-        //
-        var fileStatePair : FileStatePair[] = [new FileStatePair(fid, stateID)];
-        var CMT : CommitDT = new CommitDT(login.SessionID, update, fileStatePair);
+  //
+  var newContent : FileContent = new FileContent(stateID,metaData, val);
+  var newChange : Change[] = [new Change(fid,newContent)];
+  newChange = updateRep.changes.concat(newChange);
+  
+  var newUpdate: Update[] = [new Update(newCommitID, newChange, [], updateRep.old_cid)]
 
-        var CommitRes : ResponseDT<IResponse> = new CommitOperations(CMT).commitData(CommitCache, listOfCommits);
+  //
+  var fileStatePair : FileStatePair[] = [new FileStatePair(fid, stateID)];
+  var CMT : CommitDT = new CommitDT(sessionID, newUpdate, fileStatePair);
 
-        
-      expect(CommitRes).to.equal('Hello World!');
-    });
-  });
+  var CommitRes : ResponseDT<IResponse> = new CommitOperations(CMT).commitData(CommitCache, listOfCommits);
+  console.log(CommitRes);
+
+}

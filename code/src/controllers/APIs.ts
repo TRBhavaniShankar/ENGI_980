@@ -21,6 +21,9 @@ import { GetOperation } from '../ServerCacheOperations/GetOperation';
 import { CommitOperations } from '../ServerCacheOperations/CommitOperation';
 import { LoginDT } from '../DataTypes/LoginDT';
 import { assert } from 'console';
+import { CommitID } from '../DataTypes/CommitID';
+import { IResponse, Failure } from '../Response/ResponseObjects';
+import { SessionID } from '../DataTypes/SessionID';
 
 // Setup DB component
 var db = 'mongodb://localhost/GLIFSdb'; 
@@ -31,11 +34,9 @@ var bodyParser = require('body-parser');
 var urlencodedparser = bodyParser.urlencoded({extended: false});
 
 // Create cache objects for the file operations
-var ChangeCache : Cache<Guid, FileContent> = new Cache<Guid, FileContent>();
-var UpdateCache : Cache<Guid, [Update, FileStatePair[]]> = new Cache<Guid, [Update, FileStatePair[]]>();
-var listOfCommits : Cache<String, Guid[]> = new Cache<String, Guid[]>();
-var DataCache : Cache<Guid, [Update, FileStatePair[]]> = new Cache<Guid, [Update, FileStatePair[]]>();
-var userSessionPair : Cache<String, Guid> = new Cache<String, Guid>();
+var CommitCache : Cache<CommitID, [Update, FileStatePair[]]> = new Cache<CommitID, [Update, FileStatePair[]]>();
+var listOfCommits : CommitID[] = [];
+var userSessionPair : Cache<String, SessionID> = new Cache<String, SessionID>();
 
 // --------------------------- File Operations APIs ---------------------------
 
@@ -51,20 +52,15 @@ export let GetRequest = function(req : express.Request, res : express.Response, 
         }
 
         if(user){
-            var searchRes : [Update, Boolean] = new GetOperation(GT).searchAndGetResponse(ChangeCache, UpdateCache, listOfCommits, user.email);
+            var searchRes : ResponseDT<IResponse>= new GetOperation(GT).searchAndGetResponse(CommitCache, listOfCommits);
 
-            if(searchRes[1]){
-                // Preasent in the cache
-                res.json(new ResponseDT<Update>(200, "Succesful", "Update", searchRes[0]));
-                res.end();
-            }else{
-                // Check in the DB
-                
-            }
+            // Preasent in the cache
+            res.json(searchRes);
+            res.end();
             
         }else{
             // Unable to find the user
-            res.json(new ResponseDT<Object>(400, "Please Sign up. If you have already signed up please loggin!","",new Object()));
+            res.json(new ResponseDT<IResponse>(400, "Please Sign up. If you have already signed up please loggin!","",new Failure("Please Sign up. If you have already signed up please loggin!")));
             res.end();
         }
         
@@ -83,32 +79,22 @@ export let CommitRequest = function(req: express.Request, res:express.Response, 
     //UserAccount.findOne({SessionID : CMT.sid}, (error : Error, user : userAccType) => {
         try{
 
-            var userSID : Guid = userSessionPair.get(req.body.email);
+            var userSID : SessionID = userSessionPair.get(req.body.email);
             
-            if(userSID["value"] == CMT.sid["value"]){
+            if(userSID.isEqual(CMT.sessionid)){
 
                 console.log("CMT " +CMT);
 
-                var CommitRes : [Update, Boolean, String] = new CommitOperations(CMT).CommitData(ChangeCache, UpdateCache, DataCache, listOfCommits, req.body.email);
+                var CommitRes : ResponseDT<IResponse> = new CommitOperations(CMT).commitData(CommitCache, listOfCommits);
 
                 console.log("CommitRes " +CommitRes);
 
-                if(CommitRes[1]){
-                    // Preasent in the cache
-                    res.json(new ResponseDT<Update>(200, "Succesful", "Update", CommitRes[0]));
-                    res.end();
-                }else{
-
-                    console.log(CommitRes[1]);
-
-                    // Check in the DB
-                    // --- yet to write
-                    res.json(new ResponseDT<Object>(500, "not available","",new Object()));
-                    res.end();
-                }
+                // Preasent in the cache
+                res.json(CommitRes);
+                res.end();
             }else{
                 // Unable to find the user
-                res.json(new ResponseDT<Object>(400, "Please Sign up. If you have already signed up please loggin!","",new Object()));
+                res.json(new ResponseDT<Failure>(400, "Please Sign up. If you have already signed up please loggin!","",new Failure("Please Sign up. If you have already signed up please loggin!")));
                 res.end();
             }
             
@@ -122,151 +108,151 @@ export let CommitRequest = function(req: express.Request, res:express.Response, 
 // --------------------------- User account APIs ---------------------------
 
 
-export let login = function(req: express.Request, res:express.Response, next: express.NextFunction){
+// export let login = function(req: express.Request, res:express.Response, next: express.NextFunction){
     
-    UserAccount.findOne({email: req.body.email}, (error : Error, user : userAccType) => {
+//     UserAccount.findOne({email: req.body.email}, (error : Error, user : userAccType) => {
 
-        if(error){
-            return next(error);
-        }
-        if(user){
-            if(user.password !== req.body.password){
+//         if(error){
+//             return next(error);
+//         }
+//         if(user){
+//             if(user.password !== req.body.password){
 
-                res.json(new ResponseDT<Object>(402, "password is wrong", "", new Object()));
-                res.end();
+//                 res.json(new ResponseDT<Object>(402, "password is wrong", "", new Object()));
+//                 res.end();
 
-            }else{
+//             }else{
 
-                // Check if there is any result
+//                 // Check if there is any result
                 
-                    /**
-                     * if the user is present, send back the new session ID and
-                     * Send the last Commit ID that user made.
-                     */
+//                     /**
+//                      * if the user is present, send back the new session ID and
+//                      * Send the last Commit ID that user made.
+//                      */
 
-                    var userCommitID : Guid[] = listOfCommits.get(user.email);
+//                     var userCommitID : Guid[] = listOfCommits.get(user.email);
 
-                    if(user.isLoggedIn){
+//                     if(user.isLoggedIn){
                         
-                        res.json(new ResponseDT<LoginDT>(201, "You are already logged in!!", "LoginDT", new LoginDT(userSessionPair.get(user.email), userCommitID[userCommitID.length - 1])));
-                        res.end();
+//                         res.json(new ResponseDT<LoginDT>(201, "You are already logged in!!", "LoginDT", new LoginDT(userSessionPair.get(user.email), userCommitID[userCommitID.length - 1])));
+//                         res.end();
 
-                    }else{
-                        console.log(userCommitID[userCommitID.length - 1]);
-                        var session: Guid = Guid.create();
-                        console.log("session : "+session);
+//                     }else{
+//                         console.log(userCommitID[userCommitID.length - 1]);
+//                         var session: Guid = Guid.create();
+//                         console.log("session : "+session);
 
-                        // Add the user email paring with the session id
-                        userSessionPair.put(req.body.email, session)
+//                         // Add the user email paring with the session id
+//                         userSessionPair.put(req.body.email, session)
 
-                        UserAccount.updateOne({email: req.body.email}, { $set: { sessionID: session, isLoggedIn : true} }, (error: Error) =>{
-                            if(error){
-                                return next(error);
-                            }
-                        });
-                        console.log(userCommitID[userCommitID.length - 1]);
-                        console.log("userCommitID : "+userCommitID);
+//                         UserAccount.updateOne({email: req.body.email}, { $set: { sessionID: session, isLoggedIn : true} }, (error: Error) =>{
+//                             if(error){
+//                                 return next(error);
+//                             }
+//                         });
+//                         console.log(userCommitID[userCommitID.length - 1]);
+//                         console.log("userCommitID : "+userCommitID);
 
-                        res.json(new ResponseDT<LoginDT>(200, "Successfully logged in!!", "LoginDT",new LoginDT(session, userCommitID[userCommitID.length - 1])));
-                        res.end();
-                    }
+//                         res.json(new ResponseDT<LoginDT>(200, "Successfully logged in!!", "LoginDT",new LoginDT(session, userCommitID[userCommitID.length - 1])));
+//                         res.end();
+//                     }
 
-                }
-            }
-        else{
+//                 }
+//             }
+//         else{
 
-            res.json(new ResponseDT<Object>(400, "Cannot find the user", "", new Object()));
-            res.end();
+//             res.json(new ResponseDT<Object>(400, "Cannot find the user", "", new Object()));
+//             res.end();
 
-        }
+//         }
         
-    });
-};
+//     });
+// };
 
-export let signup = function(req: express.Request, res:express.Response, next: express.NextFunction){
+// export let signup = function(req: express.Request, res:express.Response, next: express.NextFunction){
 
-    assert( req.body.password === req.body.confirmPassword, "Password and Confirm Password does not match!!! Try again");
+//     assert( req.body.password === req.body.confirmPassword, "Password and Confirm Password does not match!!! Try again");
 
-    UserAccount.findOne({email: req.body.email}, (error : Error, user : userAccType) => {
-        if(error){
-            return next(error);
-        }
+//     UserAccount.findOne({email: req.body.email}, (error : Error, user : userAccType) => {
+//         if(error){
+//             return next(error);
+//         }
 
-        // Check if there is any result
-        if(user){
-            // if the user is present
+//         // Check if there is any result
+//         if(user){
+//             // if the user is present
             
-            listOfCommits.put(req.body.email, [user.CommitID]);
+//             listOfCommits.put(req.body.email, [user.CommitID]);
 
-            userSessionPair.put(req.body.email, user.sessionID);
-            res.json(new ResponseDT<Object>(201, "User already exists!!","Object",new LoginDT(user.sessionID,user.CommitID)));
-            res.end();
-        }
-        else{
+//             userSessionPair.put(req.body.email, user.sessionID);
+//             res.json(new ResponseDT<Object>(201, "User already exists!!","Object",new LoginDT(user.sessionID,user.CommitID)));
+//             res.end();
+//         }
+//         else{
 
-            var commitID : Guid = Guid.create();
-            var sessionID : Guid = Guid.create();
+//             var commitID : Guid = Guid.create();
+//             var sessionID : Guid = Guid.create();
 
-            var new_user = new UserAccount({
-                email: req.body.email,
-                password: req.body.password,
-                sessionID: sessionID,
-                isLoggedIn : true,
-                CommitID: commitID,
-                identifier : req.body.identifier
-            });
+//             var new_user = new UserAccount({
+//                 email: req.body.email,
+//                 password: req.body.password,
+//                 sessionID: sessionID,
+//                 isLoggedIn : true,
+//                 CommitID: commitID,
+//                 identifier : req.body.identifier
+//             });
 
-            // Add the initial commit to the list of commits
-            listOfCommits.put(req.body.email, [commitID]);
+//             // Add the initial commit to the list of commits
+//             listOfCommits.put(req.body.email, [commitID]);
 
-            userSessionPair.put(req.body.email, sessionID);
+//             userSessionPair.put(req.body.email, sessionID);
 
-            new_user.save((err : Error) => {
+//             new_user.save((err : Error) => {
                 
-                if (err) { 
-                    return next(err); 
-                }
+//                 if (err) { 
+//                     return next(err); 
+//                 }
                 
                
-            });
+//             });
             
-             /**
-             * After saving the user details in the DB, 
-             * send back a sessioin ID by logging in the user
-             */
+//              /**
+//              * After saving the user details in the DB, 
+//              * send back a sessioin ID by logging in the user
+//              */
 
-            res.json(new ResponseDT<LoginDT>(200, "Your account has been successfully register and logged in. Please logg out if you dont wish to be logged in","LoginDT",new LoginDT(sessionID, commitID)));
-            res.end();
-        }
+//             res.json(new ResponseDT<LoginDT>(200, "Your account has been successfully register and logged in. Please logg out if you dont wish to be logged in","LoginDT",new LoginDT(sessionID, commitID)));
+//             res.end();
+//         }
         
-    });
+//     });
     
-};
+// };
 
 
-// API for logging out
-export let loggout = function(req: express.Request, res:express.Response, next: express.NextFunction){
+// // API for logging out
+// export let loggout = function(req: express.Request, res:express.Response, next: express.NextFunction){
 
-    console.log("received loggout");
-    UserAccount.findOne({email: req.body.email}, (error : Error, user : userAccType) =>{
+//     console.log("received loggout");
+//     UserAccount.findOne({email: req.body.email}, (error : Error, user : userAccType) =>{
 
-        if (user.isLoggedIn){
-            UserAccount.updateOne({email: req.body.email}, { $set: { sessionID: null, isLoggedIn : false} }, (error: Error) =>{
+//         if (user.isLoggedIn){
+//             UserAccount.updateOne({email: req.body.email}, { $set: { sessionID: null, isLoggedIn : false} }, (error: Error) =>{
             
-                if(error){
-                    return next(error);
-                }
+//                 if(error){
+//                     return next(error);
+//                 }
                 
-                userSessionPair.delete(req.body.email);
+//                 userSessionPair.delete(req.body.email);
 
-                var Response :  ResponseDT<Object> = new ResponseDT<Object>(200, "Successfully logged out","Object", new Object());
+//                 var Response :  ResponseDT<Object> = new ResponseDT<Object>(200, "Successfully logged out","Object", new Object());
 
-                res.json(Response);
-                res.end();
+//                 res.json(Response);
+//                 res.end();
         
-            });
-        }
+//             });
+//         }
 
-    })  
+//     })  
     
-};
+// };

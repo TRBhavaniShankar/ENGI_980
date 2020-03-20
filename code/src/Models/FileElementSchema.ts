@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { FileStatePair } from "../DataTypes/FileStatePair";
-import { CID } from "../DataTypes/CID";
 import { fileState } from "../DataTypes/Value";
 import { StateID } from "../DataTypes/StateID";
 import { MetaData } from "../DataTypes/MetaData";

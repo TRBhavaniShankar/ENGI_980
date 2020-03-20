@@ -1,10 +1,10 @@
 import { Guid } from "guid-typescript";
-import { resp } from "./responsesInterface";
 import { FileID } from "./FileID";
 import { CommitID } from "./CommitID";
 import { SessionID } from "./SessionID";
+import { IResponse } from "../Response/ResponseObjects";
 
-export class LoginDT implements resp{
+export class LoginDT implements IResponse{
 
     SessionID: SessionID;
     cId: CommitID;
