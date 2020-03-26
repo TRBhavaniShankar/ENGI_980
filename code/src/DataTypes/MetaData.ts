@@ -2,13 +2,22 @@ import { Permissions } from "./Permissions";
 
 export class MetaData{
 
-    Users : string[] = [];
-    Permissions : Map<string, Permissions> = new Map<string, Permissions>();;
+    public Users : string[] = [];
+    private UserPermissionsDir : Map<string, Permissions> = new Map<string, Permissions>();;
     
-    constructor(User : string, Permission : Permissions){
+    putUserPermission(User : string, Permission : Permissions){
         this.Users.push(User);
-        this.Permissions.set(User,Permission);
+        this.UserPermissionsDir.set(User,Permission);
     }
 
+    getUserPermissions(user : string) : Permissions | undefined  {
+        
+        if(this.UserPermissionsDir.has(user)){
+            return this.UserPermissionsDir.get(user);
+        }
+        else{
+            return undefined;
+        }
+    } 
 
 }

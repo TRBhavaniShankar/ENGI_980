@@ -23,7 +23,8 @@ var sessionID : SessionID = new SessionID(Guid.create());
 var RootCommitID : CommitID = new CommitID(Guid.create());
 var RootDirFid : FileID = new FileID(Guid.create());
 var RootStateID : StateID = new StateID(Guid.create());
-var RootMetaData : MetaData = new MetaData("user1",new Permissions("rwx"));
+var RootMetaData : MetaData = new MetaData;
+RootMetaData.putUserPermission("user1",new Permissions("rwx"));
 var RootDir : DirectoryValues = new DirectoryValues();
 
 var dirContent : FileContent = new FileContent(RootStateID,RootMetaData,RootDir);
@@ -43,14 +44,15 @@ var FirstCommitID : CommitID = new CommitID(Guid.create());
 var FirstValFid : FileID = new FileID(Guid.create());
 
 var FirstStateID : StateID = new StateID(Guid.create());
-var FirstMetaData : MetaData = new MetaData("user1",new Permissions("rwx"));
+var FirstMetaData : MetaData = new MetaData();
+FirstMetaData.putUserPermission("user1",new Permissions("rwx"))
 var FirstVal : LeafValue = new LeafValue("aab");
 var firstdirContent : FileContent = new FileContent(FirstStateID, FirstMetaData, FirstVal);
 
 var DirEnt : DirectoryEntry = new DirectoryEntry("f1",FirstValFid);
 RootDir.push(DirEnt);
 
-dirContent = new FileContent(RootStateID,RootMetaData,RootDir);
+dirContent = new FileContent(new StateID(Guid.create()),RootMetaData,RootDir);
 RootChange = new Change(RootDirFid, dirContent);
 
 

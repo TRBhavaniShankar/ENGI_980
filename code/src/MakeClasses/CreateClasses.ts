@@ -12,6 +12,12 @@ import { DirectoryValues } from "../DataTypes/DirectoryValue";
 import { SessionID } from "../DataTypes/SessionID";
 import { FileID } from "../DataTypes/FileID";
 import { CommitID } from "../DataTypes/CommitID";
+import { StateID } from "../DataTypes/StateID";
+import { MetaData } from "../DataTypes/MetaData";
+import { Permissions } from "../DataTypes/Permissions";
+import { LeafValue } from "../DataTypes/LeafValue";
+import { DirectoryEntry } from "../DataTypes/DirectoryEntry";
+import { fileState } from "../DataTypes/Value";
 
 /**
  * Make CommitRequest class
@@ -62,7 +68,7 @@ export class mkGetRequest{
 /**
  * Make FileStatePairs class
  */
-class mkFileStatePairs{
+export class mkFileStatePairs{
 
     currentState: FileStatePair[];
 
@@ -74,12 +80,28 @@ class mkFileStatePairs{
 
         var fStatePair : FileStatePair[] = [];
 
-        this.currentState.forEach(Element =>{
+        for (let i = 0; i < this.currentState.length; i++) {
+            const element = this.currentState[i];
 
-            fStatePair.push(new FileStatePair(Element.fid, Element.stid));
-        });
+            fStatePair.push(new mkFileStatePair(element).getClassInstance());
+        }
 
         return fStatePair;
+    }
+
+}
+
+export class mkFileStatePair{
+    fileStatePair : FileStatePair;
+    constructor(fileStatePair : FileStatePair){
+        this.fileStatePair = fileStatePair
+    }
+
+    getClassInstance() : FileStatePair{
+        return new FileStatePair(
+            new FileID(this.fileStatePair.fid.getGuid()),
+            new StateID(this.fileStatePair.stid.getGuid())
+        )
     }
 
 }
@@ -100,10 +122,7 @@ class mkUpdates{
 
         this.updates.forEach(element => {
 
-            var changes : Change[] = new mkChanges(element.changes).getClassInstance();
-            var deletes : Delete[] = new mkDeletes(element.deletes).getClassInstance();
-
-            updateClassInstance.push(new Update(element.new_cid, changes, deletes, element.old_cid));
+            updateClassInstance.push(new mkUpdate(element).getClassInstance());
         });
 
         return updateClassInstance;
@@ -113,7 +132,7 @@ class mkUpdates{
 /**
  * Make Change class
  */
-class mkChanges{
+export class mkChanges{
 
     changes : Change[];
 
@@ -124,9 +143,10 @@ class mkChanges{
     getClassInstance() : Change[]{
         var changesClass : Change[] = [];
 
-        this.changes.forEach(element => {
+        for (let i = 0; i < this.changes.length; i++) {
+            const element = this.changes[i];
             changesClass.push(new Change(element.fid, new mkFileContent(element.content).getClassInstance()));
-        });
+        }
 
         return changesClass;
     }
@@ -145,7 +165,28 @@ class mkFileContent{
 
     getClassInstance() : FileContent {
 
-        return new FileContent(this.fileContent.stid, this.fileContent.metaData, this.fileContent.value);
+        // prepare the metadata
+        var metaData : MetaData = new MetaData();
+        for (let j = 0; j < this.fileContent.metaData.Users.length; j++) {
+            const user : string =  this.fileContent.metaData.Users[j];
+            
+            const perm  : Permissions | undefined =  this.fileContent.metaData.getUserPermissions(user);
+            if(perm instanceof Permissions){
+                metaData.putUserPermission(user, perm);
+            }
+
+        }
+
+        // prepare the value
+        var value : fileState = this.fileContent.value;
+        if (  this.fileContent.value instanceof DirectoryValues ){
+            value  = new mkDirectoryValue( this.fileContent.value).getClassInstance();
+            
+        }else if( this.fileContent.value instanceof LeafValue){
+            value = new LeafValue( this.fileContent.value.value);
+        }
+
+        return new FileContent(new StateID(this.fileContent.stid.getGuid()), metaData, value);
     }
 
 }
@@ -153,7 +194,7 @@ class mkFileContent{
 /**
  * Make Delete class
  */
-class mkDeletes{
+export class mkDeletes{
 
     deletes : Delete[];
 
@@ -165,9 +206,10 @@ class mkDeletes{
 
         var deleteResponce : Delete[] = [];
 
-        this.deletes.forEach(Element => {
-            deleteResponce.push(new Delete(Element.fid));
-        })
+        for (let i = 0; i < this.deletes.length; i++) {
+            const element = this.deletes[i];
+            deleteResponce.push(new Delete( new FileID( element.fid.getGuid() )));
+        }
 
         return deleteResponce;
     }
@@ -214,10 +256,29 @@ export class mkDirectoryValue{
         var dirObj : DirectoryValues = new DirectoryValues();
 
         this.dirVal.entries.forEach(ele => {
-            dirObj.push(ele);
+            dirObj.push(new DirectoryEntry(ele.name, new FileID(ele.fID.getGuid())));
         });
 
         return dirObj;
         
     }
+}
+
+export class mkUpdate{
+    update : Update
+    constructor(update : Update){
+        this.update = update;
+    }
+
+    getClassInstance() : Update {
+        
+        
+        return new Update(
+            new CommitID(this.update.new_cid.getGuid()), 
+            new mkChanges(this.update.changes).getClassInstance(),  
+            new mkDeletes(this.update.deletes).getClassInstance(), 
+            new CommitID( this.update.old_cid.getGuid())
+            );
+    }
+
 }

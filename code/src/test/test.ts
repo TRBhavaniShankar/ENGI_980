@@ -26,7 +26,8 @@ import { DirectoryEntry } from "../DataTypes/DirectoryEntry";
 var RootCommitID : CommitID = new CommitID(Guid.create());
 var RootDirFid : FileID = new FileID(Guid.create());
 var RootStateID : StateID = new StateID(Guid.create());
-var RootMetaData : MetaData = new MetaData("user1",new Permissions("rwx"));
+var RootMetaData : MetaData = new MetaData;
+RootMetaData.putUserPermission("user1",new Permissions("rwx"));
 var RootDir : DirectoryValues = new DirectoryValues();
 
 var dirContent : FileContent = new FileContent(RootStateID,RootMetaData,RootDir);
@@ -58,7 +59,8 @@ describe('app', function() : void{
 
         var fid : FileID = new FileID(Guid.create());
         var stateID : StateID = new StateID(Guid.create());
-        var metaData : MetaData = new MetaData("user1",new Permissions("rwx"));
+        var metaData : MetaData = new MetaData;
+        metaData.putUserPermission("user1",new Permissions("rwx"));
         var val : LeafValue = new LeafValue("abc");
 
         //
