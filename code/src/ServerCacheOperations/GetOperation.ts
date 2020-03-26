@@ -53,9 +53,7 @@ export class GetOperation{
             if (cids.indexOf(this.cid) == cids.length -1){
                 
                 // The cid provided by the user is the head of the commits
-
-                var new_cid : CommitID = this.cid;
-                var updateRes : Update = new Update(new_cid, update.changes, update.deletes, this.cid);
+                var updateRes : Update = new Update(cids[cids.length -1], update.changes, update.deletes, this.cid);
                 return new ResponseDT<Update>(200, "The commit ID sent by the user is same as the head of commit","Update", updateRes);
 
             }else{

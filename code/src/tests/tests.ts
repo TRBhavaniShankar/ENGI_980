@@ -40,6 +40,7 @@ var RootChange : Change = new Change(RootDirFid,dirContent);
 var RootUpdate : Update = new Update(RootCommitID, [RootChange], [], new CommitID(Guid.create()));
 // Initialte the caches
 var CommitCache : Cache<CommitID, [Update, FileStatePair[]]> = new Cache<CommitID, [Update, FileStatePair[]]>();
+
 CommitCache.put(RootCommitID, [RootUpdate, [new FileStatePair(RootDirFid, RootStateID)]]);
 
 var listOfCommits : CommitID[] = [RootCommitID];
