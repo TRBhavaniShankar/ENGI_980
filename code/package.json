@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "pretest": "tsc -p .",
+    "test": "mocha --recursive './dist/test/*.js'",
     "dev": "nodemon src/app.ts",
     "build": "tsc -p ."
   },
