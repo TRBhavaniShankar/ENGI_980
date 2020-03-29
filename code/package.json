@@ -4,9 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "pretest": "tsc -p .",
+    "test": "mocha --recursive './dist/test/*.js'",
     "dev": "nodemon src/app.ts",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "clean": "rm -r ./dist/*"
   },
   "author": "",
   "license": "ISC",
@@ -14,7 +16,6 @@
     "@types/body-parser": "^1.17.1",
     "@types/chai": "^4.2.11",
     "@types/ejs": "^3.0.0",
-    "@types/expect": "^24.3.0",
     "@types/express": "^4.17.2",
     "@types/mocha": "^7.0.2",
     "@types/node": "^13.5.0",
