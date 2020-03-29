@@ -4,16 +4,24 @@ import { FileID } from "./FileID";
 
 export class Change {
     
-    fid: FileID;
-    content: FileContent;
+    private fid: FileID;
+    private content: FileContent;
 
     constructor(fid: FileID, content: FileContent){
         this.fid = fid;
         this.content = content;
     }
 
-    toString() : string{
-        return this.fid.toString() + " " + this.content.toString();
+    public getFileID() : FileID{
+        return this.fid;
+    }
+
+    public getContent() : FileContent{
+        return this.content;
+    }
+
+    public toString() : string{
+        return "File ID : " + this.fid.toString() + " , \n" + "File Content : \n" + this.content.toString() + "\n";
     }
 
 }

@@ -1,29 +1,19 @@
 import express from 'express';
 import mongoose from 'mongoose';
 
-// Get the document and model of the database
-import {default as commit, CommitType} from "../Models/CommitSchema"
-import {default as UserAccount, userAccType} from "../Models/UserAccountSchema";
-import {default as fileElement, fileElementType} from "../Models/FileElementSchema";
-
 // Get the datatypes used for the api's
 import { GetRequestDT } from '../DataTypes/GetRequest';
-import { FileStatePair } from '../DataTypes/FileStatePair';
 import { CommitDT } from '../DataTypes/Commit';
-import { Update } from '../DataTypes/Update';
-import { FileContent } from '../DataTypes/Content';
 import { ResponseDT } from '../Response/ResponseDT';
-import { mkGetRequest, mkCommitRequest } from '../MakeClasses/CreateClasses';
+import { getGetRequestClassInstance, getCommitRequestClassInstance } from '../MakeClasses/CreateClasses';
 import { Cache } from '../Cache/Cache';
-import { Change } from '../DataTypes/Change';
-import { Guid } from "guid-typescript";
 import { GetOperation } from '../ServerCacheOperations/GetOperation';
 import { CommitOperations } from '../ServerCacheOperations/CommitOperation';
-import { LoginDT } from '../DataTypes/LoginDT';
-import { assert } from 'console';
 import { CommitID } from '../DataTypes/CommitID';
 import { IResponse, Failure } from '../Response/ResponseObjects';
 import { SessionID } from '../DataTypes/SessionID';
+import { initServerOperations } from '../ServerCacheOperations/InitServerOperation';
+import { UserAccount } from '../DataTypes/UserAccount';
 
 // Setup DB component
 var db = 'mongodb://localhost/GLIFSdb'; 
@@ -33,25 +23,25 @@ mongoose.connect(db, { useNewUrlParser: true,  useUnifiedTopology: true });
 var bodyParser = require('body-parser');
 var urlencodedparser = bodyParser.urlencoded({extended: false});
 
-// Create cache objects for the file operations
-var CommitCache : Cache<CommitID, [Update, FileStatePair[]]> = new Cache<CommitID, [Update, FileStatePair[]]>();
-var listOfCommits : CommitID[] = [];
-var userSessionPair : Cache<String, SessionID> = new Cache<String, SessionID>();
+// initialte cache objects for the file operations
+var init : [Cache<CommitID, CommitDT> , CommitID[] , Cache<String, UserAccount>] = initServerOperations();
+var CommitCache : Cache<CommitID, CommitDT> = init[0];
+var listOfCommits : CommitID[] = init[1];
+var userSessionPair : Cache<String, UserAccount> = init[2];
 
 // --------------------------- File Operations APIs ---------------------------
 
 // API for the client to the request for the fileitem 
 export let GetRequest = function(req : express.Request, res : express.Response, next : express.NextFunction){
 
-    var GT : GetRequestDT = new mkGetRequest(req.body.object).getClassInstance();
-    
-    UserAccount.findOne({SessionID : GT.sid}, (error : Error, user : userAccType) => {
+    var GT : GetRequestDT = getGetRequestClassInstance(req.body.object);
 
-        if(error){
-            return next(error);
-        }
+    try{
 
-        if(user){
+        var userAccount : UserAccount = < UserAccount > userSessionPair.get(req.body.email);
+        
+        if(userAccount.getsessionID().isEqual(GT.sid)){
+            
             var searchRes : ResponseDT<IResponse>= new GetOperation(GT).searchAndGetResponse(CommitCache, listOfCommits);
 
             // Preasent in the cache
@@ -59,14 +49,17 @@ export let GetRequest = function(req : express.Request, res : express.Response, 
             res.end();
             
         }else{
+
             // Unable to find the user
-            res.json(new ResponseDT<IResponse>(400, "Please Sign up. If you have already signed up please loggin!","",new Failure("Please Sign up. If you have already signed up please loggin!")));
+            res.json(new ResponseDT<IResponse>(400, "Please Sign up. If you have already signed up please loggin!",
+                    "",new Failure("Please Sign up. If you have already signed up please loggin!")));
             res.end();
         }
-        
-        res.json(Response);
+
+    }catch(error){
+        res.json(error);
         res.end();
-    });
+    }
     
 };
 
@@ -74,18 +67,18 @@ export let GetRequest = function(req : express.Request, res : express.Response, 
 export let CommitRequest = function(req: express.Request, res:express.Response, next : express.NextFunction){
 
     // req.body := SessionID, updates[], CID, FileStatePair 
-    var CMT : CommitDT= new mkCommitRequest(req.body.object).getClassInstance();
+    var CMT : CommitDT= getCommitRequestClassInstance(req.body.object);
 
     //UserAccount.findOne({SessionID : CMT.sid}, (error : Error, user : userAccType) => {
         try{
 
-            var userSID : SessionID = userSessionPair.get(req.body.email);
+            var userAcc : UserAccount = < UserAccount > userSessionPair.get(req.body.email);
             
-            if(userSID.isEqual(CMT.sessionid)){
+            if(userAcc.getsessionID().isEqual(CMT.getSessionID())){
 
                 console.log("CMT " +CMT);
 
-                var CommitRes : ResponseDT<IResponse> = new CommitOperations(CMT).commitData(CommitCache, listOfCommits);
+                var CommitRes : ResponseDT<IResponse> = new CommitOperations(CMT).processCommit(CommitCache, listOfCommits);
 
                 console.log("CommitRes " +CommitRes);
 
@@ -98,8 +91,9 @@ export let CommitRequest = function(req: express.Request, res:express.Response, 
                 res.end();
             }
             
-        }catch{
-
+        }catch(error){
+            res.json(error);
+            res.end();
         }
     
 };

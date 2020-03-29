@@ -1,41 +1,34 @@
 import { Update } from "../DataTypes/Update"
 import { FileStatePair } from "../DataTypes/FileStatePair"
-import { Guid } from "guid-typescript";
 import { Cache } from '../Cache/Cache';
 import { FileContent } from '../DataTypes/Content';
 import { Change } from "../DataTypes/Change";
 import { Delete } from "../DataTypes/Delete";
 import { CommitDT } from "../DataTypes/Commit";
 import { DirectoryValues } from "../DataTypes/DirectoryValue";
-import { mkDirectoryValue, mkChanges, mkDeletes, mkUpdate, mkFileStatePairs } from "../MakeClasses/CreateClasses";
-import { LeafValue } from "../DataTypes/LeafValue";
+import { getDirectoryValueClassInstance, getUpdateClassInstance, getFileStatePairsClassInstance, getFileStatePairClassInstance } from "../MakeClasses/CreateClasses";
 import { FileID } from "../DataTypes/FileID";
 import { CommitID } from "../DataTypes/CommitID";
-import { GIDs } from "../DataTypes/GenerateIDs";
 import { SessionID } from "../DataTypes/SessionID";
 import { Success, IResponse } from "../Response/ResponseObjects";
 import { ResponseDT } from "../Response/ResponseDT";
 import { StateID } from "../DataTypes/StateID";
-import { MetaData } from "../DataTypes/MetaData";
+import { DirectoryEntry } from "../DataTypes/DirectoryEntry";
+import { FileState } from "../DataTypes/Value";
 
 export class CommitOperations{
 
-    sid: SessionID;
-    updates: Update[];
-    currentState: FileStatePair[];
+    
+    private commitObject : CommitDT;
+    private sid: SessionID ;
+    private updates: Update[] ;
+    private currentState: FileStatePair[];
 
     constructor(commitObject : CommitDT){
-
-        this.sid = commitObject.sessionid;
-        this.updates = commitObject.updates;
-        this.currentState = commitObject.currentState;
-
-        console.log(this.sid);
-    }
-
-
-    toString() : String {
-        return "Commit DT : " + this.sid;
+        this.commitObject = commitObject;
+        this.sid = commitObject.getSessionID();
+        this.updates = commitObject.getUpdates();
+        this.currentState = commitObject.getFileStatepairs();
     }
 
     /**
@@ -57,145 +50,99 @@ export class CommitOperations{
      * @param listOfCommits : This is the cache which stores the list of commit, which is a series in the array
      */
 
-    public commitData(CommitCache : Cache<CommitID, [Update, FileStatePair[]]>, 
+    public processCommit(CommitCache : Cache<CommitID, CommitDT>, 
                       listOfCommits : CommitID[]) : 
     ResponseDT<IResponse> {
-            
-        var updatedData : Update ;  
+
         var cids : CommitID[] = listOfCommits;
+        var augmentedData : Update = this.processingAugmentation(cids);
 
-        var augmentedData : [Update, FileStatePair[]] = this.processingAugmentation(cids);
-        
-        console.log("augmentedData[0] "+augmentedData[0].toString());
+        // Get the data head of the commit
+        var headCommitObject : CommitDT = < CommitDT > CommitCache.get(cids[cids.length - 1]);
+        var head : Update[] = headCommitObject.getUpdates();
+        // As the head points to the CommitCache, we need to make a new object for update in head
+        var tempHeadUpdate : Update = getUpdateClassInstance(head[0]);
 
-        // Check if the new commit id from the user is in the cache storage already
-        
-        if(augmentedData[0].new_cid == cids[cids.length - 1]){
-            // Case 1 : If the server's head is cdx, it can simply reply with "success". 
-            // (This can happen in the case of a resend.)
+        if(cids.indexOf(augmentedData.getNewCid()) != -1){
 
-            return new ResponseDT<Success>(200, "This commit is already the head of the commit", "Success", new Success());
-            // ------ Done -------
-            
-        }
-        else if(cids.indexOf(augmentedData[0].old_cid) != -1){
+            if(augmentedData.getNewCid() == cids[cids.length - 1]){
+                // Case 1 : If the server's head is cdx, it can simply reply with "success". 
+                // (This can happen in the case of a resend.)
 
-            if(augmentedData[0].old_cid == cids[cids.length - 1]){
-                // Case 3 : If the server's head is still cid0 at the time the commit is received, 
-                // then the server can simply make the updates proposed and replies with a "success" response.
-
-                var head : [Update, FileStatePair[]] = CommitCache.get(cids[cids.length - 1]);
-
-                // As the head points to the CommitCache, we need to make a new object for update in head
-                var headUpdate : Update = new mkUpdate(head[0]).getClassInstance();
+                return new ResponseDT<Success>(200, "This commit is already the head of the commit", "Success", new Success());
+            }
+            else{
+                // Case 2 : If the server's head is not cdx, but it was in the past, then the server sends back a "files" 
+                // response to update the client from state cd0
                 
-                for (let i = 0; i < headUpdate.changes.length; i++) {
-                    const changesElement = headUpdate.changes[i];
+                // Get all the files from the head change and head delete which are related to the file id's sent by the user
+                var changes : Change[] = [];
+                var deletes : Delete[] = [];
 
-                    for (let j = 0; j < augmentedData[0].changes.length; j++) {
-                        const augElement = augmentedData[0].changes[j];
-                        
-                        // Replace the ones which are updated
-                        if(changesElement.fid.isEqual(augElement.fid)){
-                            headUpdate.changes[i] = augElement;
-                            augmentedData[0].changes.splice(j,1);
+                // New changes
+                for (let i = 0; i < augmentedData.getChanges().length; i++) {
+                    const changeElement = augmentedData.getChanges()[i];
+                    
+                    for (let j = 0; j < tempHeadUpdate.getChanges().length; j++) {
+                        const tempHeadChange = tempHeadUpdate.getChanges()[j];
+
+                        if(tempHeadChange.getFileID().isEqual(changeElement.getFileID())){
+                            changes.push(tempHeadChange);
                         }
+                   
                     }
+
                 }
 
-                // add the ones which are new
-                headUpdate.changes.concat(augmentedData[0].changes);
+                // New deletes
+                for (let i = 0; i < augmentedData.getDelets().length; i++) {
+                    const deleteElement = augmentedData.getDelets()[i];
+                    
+                    for (let j = 0; j < tempHeadUpdate.getDelets().length; j++) {
+                        const tempHeadDelete = tempHeadUpdate.getDelets()[j];
 
-                // add the updated file state pairs to the commit head
-                var headFileStatePair : FileStatePair[] = this.getFileStatePairFromUpdate(headUpdate);
+                        if(tempHeadDelete.getFileID().isEqual(deleteElement.getFileID())){
+                            deletes.push(tempHeadDelete);
+                        }
+                   
+                    }
 
-                // add new and old commit to head
-                headUpdate.new_cid = augmentedData[0].new_cid;
-                headUpdate.old_cid = augmentedData[0].old_cid;
+                }
 
-                CommitCache.put(headUpdate.new_cid, [headUpdate, headFileStatePair]);
+                var updatedData : Update = new Update(augmentedData.getNewCid(), changes, deletes, augmentedData.getOldCid());
 
-                // Update the list of commits cache for the user, by setting the head of the commit to new_cid
-                listOfCommits.push(headUpdate.new_cid);
+                return new ResponseDT<Update>(200, "This commit was a commit in the past, the corresponding data at the commit has been provided",
+                 "Update", updatedData);
+            }
+            
+        }
+        else{
 
+            if(augmentedData.getOldCid() == cids[cids.length - 1]){
+                // Case 3 : If the server's head is still cid0 at the time the commit is received, 
+                // then the server can simply make the updates proposed and replies with a "success" response.
+                var newHead : Update = this.commitData(tempHeadUpdate, augmentedData, CommitCache, listOfCommits);
+    
                 return new ResponseDT<Success>(200, "Successfully added the commit as the head of commit", "Success", new Success());
-                // ------ Done -------
 
             }
             else{ //
-                // Case 2 : If the server's head is not cdx, but it was in the past, then the server sends back a "files" 
-                // response to update the client from state cd0
+                // Case 4 : Otherwise, the server will try to merge the proposed commit with its current head to produce 
+                // a new head, CD1. It then replies with a "files" response. (The interpretation of the "files" response is as above.)
 
-                var CommitCacheValue : [Update, FileStatePair[]] = CommitCache.get(this.updates[0].old_cid);
-                var updatedData : Update = CommitCacheValue[0];
+                // As the newMergedHead points to the CommitCache, we need to make a new object for update in newMergedHead
+                var newMergedHead = getUpdateClassInstance(this.mergerUnknownFiles(tempHeadUpdate, augmentedData));
 
-                return new ResponseDT<Update>(200, "This commit was a commit in the past, the corresponding data at the commit "+
-                                                "has been provided", "Update", updatedData)
-                // ------ Done -------
-            }
+                var newHead : Update = this.commitData(tempHeadUpdate, newMergedHead, CommitCache, listOfCommits);
 
-        }
-        else{
-            // Case 4 : Otherwise, the server will try to merge the proposed commit with its current head to produce 
-            // a new head, CD1. It then replies with a "files" response. (The interpretation of the "files" response is as above.)
+                // Get head of the commit to return
+                return new ResponseDT<Update>(200, "We could not find the old commit id in the list of commit, therefore we"+
+                                                   " have merged the data that you have sent with the head of commit data", 
+                                                   "Update", newHead);
 
-            var head : [Update, FileStatePair[]] = CommitCache.get(cids[cids.length - 1]);
-
-            // As the head points to the CommitCache, we need to make a new object for update in head
-            var headUpdate : Update = new mkUpdate(head[0]).getClassInstance();
-
-            // As the newMergedHead points to the CommitCache, we need to make a new object for update in newMergedHead
-            var newMergedHead : [Update, FileStatePair[]]  = this.mergerUnknownFiles([headUpdate, head[1]], augmentedData);
-            newMergedHead[0] = new mkUpdate(newMergedHead[0]).getClassInstance();
-            newMergedHead[1] = new mkFileStatePairs(newMergedHead[1]).getClassInstance();
-
-            //
-            for (let i = 0; i < headUpdate.changes.length; i++) {
-                const changesElement = headUpdate.changes[i];
-
-                for (let j = 0; j < newMergedHead[0].changes.length; j++) {
-                    const augElement = newMergedHead[0].changes[j];
-                    
-                    // Replace the ones which are updated
-                    if(changesElement.fid.isEqual(augElement.fid)){
-                        headUpdate.changes[i] = new Change(augElement.fid, augElement.content) ;
-                        newMergedHead[0].changes.splice(j,1);
-                    }
-                }
-            }
-
-            // add the ones which are new
-            for (let a = 0; a < newMergedHead[0].changes.length; a++) {
-                const newMergeElement = newMergedHead[0].changes[a];
-                
-                headUpdate.changes.push(newMergeElement);
-
-            }
-            
-            console.log(" head[0].changes[0].content.stid " + headUpdate.changes[0].content.stid);
-            console.log(" head[0].changes[0].content.stid " + newMergedHead[0].changes[0].content.stid);
-            console.log(" head[0].changes[0].content.stid " + CommitCache.get(cids[cids.length - 1])[0].changes[0].content.stid);
-
-            // add the updated file state pairs to the commit head
-            var headFileStatePair : FileStatePair[] = this.getFileStatePairFromUpdate(headUpdate);
-
-            // add new and old commit to head
-            headUpdate.new_cid = newMergedHead[0].new_cid;
-            headUpdate.old_cid = newMergedHead[0].old_cid;
-
-            // Finally put the data in the commit cache
-            CommitCache.put(headUpdate.new_cid, [headUpdate, headFileStatePair]);
-
-            // Update the list of commits cache for the user, by setting the head of the commit to new_cid
-            listOfCommits.push(headUpdate.new_cid);
-
-            // Get head of the commit to return
-            return new ResponseDT<Update>(200, "We could not find the old commit id in the list of commit, therefore we"+
-                                            " have merged the data that you have sent with the head of commit data", 
-                                            "Update", headUpdate)
+            }        
         }
     }
-
 
     /**
      * As the input that we are getting from the use Consists of series of update, i.e., list of
@@ -203,8 +150,8 @@ export class CommitOperations{
      * 
      * If commit is :
      *   commit{ sid: s, updates: [
-                                  update{ new_cid : cidy,  update: updates, deletes: deletes, old_cid : cidx }, 
-                                  update{ new_cid : cidx,  update: updates, deletes: deletes, old_cid : cid0 }], 
+                                  update{ getNewCid() : cidy,  update: updates, deletes: deletes, getOldCid() : cidx }, 
+                                  update{ getNewCid() : cidx,  update: updates, deletes: deletes, getOldCid() : cid0 }], 
                   currentState: pairs }
 
      * So here the client is proposing that the server update from cid0 to cidx and then to cidy. It does so as follows.
@@ -214,21 +161,21 @@ export class CommitOperations{
      * If cidx is not the current head, but was in the past, the server will ignore the second update record. 
         It behaves as if the message was
      * commit{ sid: s, updates: [
-                                  update{ new_cid : cidy,  update: updates, deletes: deletes, old_cid : cidx }], 
+                                  update{ getNewCid() : cidy,  update: updates, deletes: deletes, getOldCid() : cidx }], 
                   currentState: pairs1 }
      * where pairs1 is a suitably modified copy of pairs.
 
      * If cidx was never the current head, then the server needs to combine the two updates to make one update,
        and behaves as if the request was
      *  commit{ sid: s, updates: [
-                                  update{ new_cid : cidy,  update: updates1, deletes: deletes1, old_cid : cid0 }], 
+                                  update{ getNewCid() : cidy,  update: updates1, deletes: deletes1, getOldCid() : cid0 }], 
                   currentState: pairs }
      * 
      * @param cids : list of Commit ID in sequence of commits of the user
      * @returns UpdateFileStatepair : Returns a tuple of Update which is processed augmentation.  
      *                                And list of filestate pair.
      */
-    private processingAugmentation( cids : CommitID[]) : [Update, FileStatePair[]] {
+    private processingAugmentation( cids : CommitID[]) : Update {
 
         /**
          * 
@@ -238,11 +185,9 @@ export class CommitOperations{
          * (This could happen if the server got an earlier update message, but the reply was lost before the client could get it.)
          * */
 
-        var returnUpdate : Update = this.updates[0];
-
         // The lastest commit in the series of commit will consists of all the resent updates and delets
-        var augmentedChanges : Change[] = augmentedChanges = this.updates[0].changes;
-        var augmentedDeletes : Delete[] = augmentedDeletes = this.updates[0].deletes;
+        var augmentedChanges : Change[] = augmentedChanges = this.updates[0].getChanges();
+        var augmentedDeletes : Delete[] = augmentedDeletes = this.updates[0].getDelets();
 
         var i : number = 1;
 
@@ -251,11 +196,11 @@ export class CommitOperations{
         while(i < this.updates.length && this.updates.length > 1){
 
             // if the old commit id of this update ubject is not present in the list of commit
-            if(cids.indexOf(this.updates[i].old_cid) == -1){
+            if(cids.indexOf(this.updates[i].getOldCid()) == -1){
 
                 // Take the change and delete list from list of updates, one by one
-                var currChange : Change[] = this.updates[i].changes;
-                var currDelets : Delete[] = this.updates[i].deletes;
+                var currChange : Change[] = this.updates[i].getChanges();
+                var currDelets : Delete[] = this.updates[i].getDelets();
 
                 // Go through all the change elemnts from the current update element and remove all the 
                 // ones which are present in the augmentedChanges, which will be the ultimate change list for this commit
@@ -265,7 +210,7 @@ export class CommitOperations{
                     for (let k = 0; k < currChange.length; k++) {
                         const currElement : Change= currChange[k];
         
-                        if(currElement.fid.isEqual(augElement.fid)){
+                        if(currElement.getFileID().isEqual(augElement.getFileID())){
                             currChange.splice(k,1);
                         }
                     }
@@ -280,7 +225,7 @@ export class CommitOperations{
                     for (let k = 0; k < currDelets.length; k++) {
                         const currElement : Delete = currDelets[k];
         
-                        if(currElement.fid.isEqual(augElement.fid)){
+                        if(currElement.getFileID().isEqual(augElement.getFileID())){
                             currDelets.splice(k,1);
                         }
                     }
@@ -293,16 +238,8 @@ export class CommitOperations{
             }
 
         }
-        
-        returnUpdate = new Update(this.updates[0].new_cid, augmentedChanges, augmentedDeletes, this.updates[i - 1].old_cid);
-        
-        // Make a new pair of file state pairs
-        var pairs1 : FileStatePair[] = [];
-        for (let i = 0; i < returnUpdate.changes.length; i++) {
-            pairs1.push(new FileStatePair(returnUpdate.changes[i].fid, returnUpdate.changes[i].content.stid));
-        }
-        
-        return [returnUpdate, pairs1];
+
+        return new Update(this.updates[0].getNewCid(), augmentedChanges, augmentedDeletes, this.updates[i - 1].getOldCid());;
     }
 
     /**
@@ -313,71 +250,75 @@ export class CommitOperations{
      * @returns UpdateFileStatepair : Returns a tuple of Update which is processed augmentation.  
      *                                And list of filestate pair.
      */
-    private mergerUnknownFiles(headOfCommit : [Update, FileStatePair[]], augmentedData : [Update, FileStatePair[]]) : 
-            [Update, FileStatePair[]]{
-
+    private mergerUnknownFiles(headOfCommit : Update, augmentedData : Update) : Update{
         
         // Remove all the deleted files in the request commit which are already deleted in the head of commits
-        for (let k = 0; k < headOfCommit[0].deletes.length; k++) {
-            const Element = headOfCommit[0].deletes[k];
-
-            for (let i = 0; i < augmentedData[0].changes.length; i++) {
-                const fileterElement = augmentedData[0].changes[i];
-
-                if(fileterElement.fid.isEqual(Element.fid)){
-                    augmentedData[0].changes.splice(i, 1);
+        // Which consists of same state id
+        for (let k = 0; k < headOfCommit.getDelets().length; k++) {
+            const Element = headOfCommit.getDelets()[k];
+            for (let i = 0; i < augmentedData.getChanges().length; i++) {
+                const fileterElement = augmentedData.getChanges()[i];
+                // if file id and state id are equal to the one which is in the deleted items in
+                // the head of commit then it is considered as deleted
+                if(fileterElement.getFileID().isEqual(Element.getFileID()) &&
+                   fileterElement.getContent().getStid().isEqual(Element.getStateID())
+                   ){
+                    augmentedData.getChanges().splice(i, 1);
+                }else{
+                    headOfCommit.getDelets().splice(k, 1);
                 }
             }
-
         }
-        
 
         // Remove all the deleted files in the head of commit which is given by the new commit 
-        for (let k = 0; k < augmentedData[0].deletes.length; k++) {
-            const Element = augmentedData[0].deletes[k];
-
-            for (let i = 0; i < headOfCommit[0].changes.length; i++) {
-                const fileterElement = headOfCommit[0].changes[i];
-
-                if(fileterElement.fid.isEqual(Element.fid)){
-                    headOfCommit[0].changes.splice(i, 1);
-                    headOfCommit[0].deletes.push(Element);
+        for (let k = 0; k < augmentedData.getDelets().length; k++) {
+            const Element = augmentedData.getDelets()[k];
+            for (let i = 0; i < headOfCommit.getChanges().length; i++) {
+                const fileterElement = headOfCommit.getChanges()[i];
+                if(fileterElement.getFileID().isEqual(Element.getFileID()) ){
+                    headOfCommit.getChanges().splice(i, 1);
+                    headOfCommit.getDelets().push(Element);
                 }
             }
-
         }
 
         // Merger the commits
         var newDir : DirectoryValues = new DirectoryValues();
         var newChanges : Change[] = [];
 
-        for (let i = 0; i < augmentedData[0].changes.length; i++) {
-            const augElement = augmentedData[0].changes[i];
+        for (let i = 0; i < augmentedData.getChanges().length; i++) {
+            const augElement = augmentedData.getChanges()[i];
 
-            for (let j = 0; j < headOfCommit[0].changes.length; j++) {
-                const hocEle = headOfCommit[0].changes[j];
+            for (let j = 0; j < headOfCommit.getChanges().length; j++) {
+                const hocEle = headOfCommit.getChanges()[j];
 
-                if(augElement.fid.isEqual(hocEle.fid) 
-                    && augElement.content.value instanceof DirectoryValues 
-                    && hocEle.content.value instanceof DirectoryValues){
+                var augFileState : FileState = augElement.getContent().getValue();
+                var hocFileState : FileState = hocEle.getContent().getValue();
+
+                if(augElement.getFileID().isEqual(hocEle.getFileID()) 
+                    && augFileState instanceof DirectoryValues 
+                    && hocFileState instanceof DirectoryValues){
                  
                      // If it DirectoryValues
 
-                     var tempReqDirVal : DirectoryValues = new mkDirectoryValue(augElement.content.value).getClassInstance();
-                     var tempHOCDirVal : DirectoryValues = new mkDirectoryValue(hocEle.content.value).getClassInstance();
+                     var tempReqDirVal : DirectoryValues = getDirectoryValueClassInstance(augFileState);
+                     var tempHOCDirVal : DirectoryValues = getDirectoryValueClassInstance(hocFileState);
                     
                      // If the head of the commit consists of the file id which is same as the one requested from user
                      // then the file id which is requested by user will be added to the 
-                     for (let k = 0; k < tempReqDirVal.entries.length; k++) {
-                         const reqDir = tempReqDirVal.entries[k];
+                     var tempReqDirEntries : DirectoryEntry[] = tempReqDirVal.getValue();
+                     var tempHocDirEntries : DirectoryEntry[] = tempHOCDirVal.getValue();
 
-                         for (let l = 0; l < tempHOCDirVal.entries.length; l++) {
-                             const hocEle = tempHOCDirVal.entries[l];
+                     for (let k = 0; k < tempReqDirEntries.length; k++) {
+                         const reqDir = tempReqDirEntries[k];
+
+                         for (let l = 0; l < tempHocDirEntries.length; l++) {
+                             const hocEle = tempHocDirEntries[l];
                              
-                             if(reqDir.fID.isEqual(hocEle.fID)){
+                             if(reqDir.getFileID().isEqual(hocEle.getFileID())){
                                 newDir.push(reqDir);
-                                tempReqDirVal.entries.splice(k, 1);
-                                tempHOCDirVal.entries.splice(l, 1);
+                                tempReqDirEntries.splice(k, 1);
+                                tempReqDirEntries.splice(l, 1);
                             }
 
                          }
@@ -385,12 +326,12 @@ export class CommitOperations{
                      }
 
                      // Concatinate remaining file id's
-                     newDir.entries.concat(tempHOCDirVal.entries);
-                     newDir.entries.concat(tempReqDirVal.entries);
+                     newDir.concatnate(tempHOCDirVal.getValue());
+                     newDir.concatnate(tempReqDirVal.getValue());
 
-                     var newContent: FileContent = new FileContent(augElement.content.stid, augElement.content.metaData,newDir);
+                     var newContent: FileContent = new FileContent(augElement.getContent().getStid(), augElement.getContent().getMetaData(),newDir);
 
-                     newChanges.push(new Change(augElement.fid, newContent));  
+                     newChanges.push(new Change(augElement.getFileID(), newContent));  
                 }
                 else{
                     // If it is a new change just add it to the new head, as the change is a new request from the user
@@ -400,31 +341,61 @@ export class CommitOperations{
             }   
         }
 
-        var newHead : Update = new Update(augmentedData[0].new_cid, newChanges, headOfCommit[0].deletes, headOfCommit[0].new_cid);
-
-        // Prepare a new filestate pair
-        headOfCommit[1] = [];
-        for (let i = 0; i < newHead.changes.length; i++) {
-            headOfCommit[1].push(new FileStatePair(newHead.changes[i].fid, newHead.changes[i].content.stid));
-        }
-
-        return [newHead, headOfCommit[1]];
+        return new Update(augmentedData.getNewCid(), newChanges, headOfCommit.getDelets(), headOfCommit.getNewCid());
         
     }
-
 
     private getFileStatePairFromUpdate(update : Update) : FileStatePair[]{
 
         var returnFileStatePait : FileStatePair[] = [];
 
-        for (let i = 0; i < update.changes.length; i++) {
+        for (let i = 0; i < update.getChanges().length; i++) {
             returnFileStatePait.push(new FileStatePair(
-                new FileID( update.changes[i].fid.getGuid() ),
-                new StateID( update.changes[i].content.stid.getGuid() ) ));
+                new FileID( update.getChanges()[i].getFileID().getGuid() ),
+                new StateID( update.getChanges()[i].getContent().getStid().getGuid() ) ));
         }
 
         return returnFileStatePait;
     
+    }
+
+    private commitData(tempHead : Update , 
+                       newUpdate : Update,
+                       CommitCache : Cache<CommitID, CommitDT>, 
+                       listOfCommits : CommitID[]) : Update{
+
+        //
+        for (let i = 0; i < tempHead.getChanges().length; i++) {
+            const changesElement = tempHead.getChanges()[i];
+
+            for (let j = 0; j < newUpdate.getChanges().length; j++) {
+                const augElement = newUpdate.getChanges()[j];
+                
+                // Replace the ones which are updated
+                if(changesElement.getFileID().isEqual(augElement.getFileID())){
+                    tempHead.getChanges()[i] = new Change(augElement.getFileID(), augElement.getContent()) ;
+                    newUpdate.getChanges().splice(j,1);
+                }
+            }
+        }
+
+        // add the ones which are new
+        for (let a = 0; a < newUpdate.getChanges().length; a++) {
+            const newMergeElement = newUpdate.getChanges()[a];
+            tempHead.getChanges().push(newMergeElement);
+        }
+
+        // Create new head
+        var newHead : Update = new Update( newUpdate.getNewCid(), tempHead.getChanges(), tempHead.getDelets(), newUpdate.getOldCid());
+
+        // Commit to the data base
+        CommitCache.put(newHead.getNewCid(),  new CommitDT(this.sid,  [newHead], this.getFileStatePairFromUpdate(newHead)));
+
+        // Update the list of commits cache for the user, by setting the head of the commit to new_cid
+        listOfCommits.push(newHead.getNewCid());
+
+        return newHead;
+
     }
 
 }

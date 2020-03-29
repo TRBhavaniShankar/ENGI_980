@@ -1,21 +1,23 @@
 import { Guid } from "guid-typescript";
 import { FileID } from "./FileID";
+import { FileStatePair } from "./FileStatePair";
+import { StateID } from "./StateID";
 
 export class Delete {
     
-    fid: FileID;
+    private fileStatePair: FileStatePair;
 
-    constructor(fid: FileID){
-        this.fid = fid;
+    constructor(fileStatePair: FileStatePair){
+        this.fileStatePair = fileStatePair;
     }
 
-    delete() : FileID{
-        // have to write delete functionality
-        return this.fid;
+    public getFileID() : FileID{
+        return this.fileStatePair.getFileID();
     }
 
-    toString() : string{
-        return "";
+    public getStateID() : StateID{
+        return this.fileStatePair.getStateID();
     }
+
 
 }

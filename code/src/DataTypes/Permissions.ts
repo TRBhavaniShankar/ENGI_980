@@ -6,7 +6,7 @@ export class Permissions{
         this.permissions = permissions;
     }
 
-    getPermissionString() : string{
+    public getPermissionString() : string{
         return this.permissions
     }
 

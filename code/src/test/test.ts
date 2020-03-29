@@ -6,11 +6,8 @@ import { FileStatePair } from "../DataTypes/FileStatePair";
 import { Update } from "../DataTypes/Update";
 import { Guid } from "guid-typescript";
 import { CommitOperations } from "../ServerCacheOperations/CommitOperation";
-import * as apis from "../controllers/APIs";
-import { mkLogginDT, mkResponseDT } from "../MakeClasses/CreateClasses";
 import { LoginDT } from "../DataTypes/LoginDT";
 import { ResponseDT } from "../Response/ResponseDT";
-import { Delete } from "../DataTypes/Delete";
 import { Change } from "../DataTypes/Change";
 import { LeafValue } from "../DataTypes/LeafValue";
 import { MetaData } from "../DataTypes/MetaData";
@@ -21,60 +18,78 @@ import { StateID } from "../DataTypes/StateID";
 import { Permissions } from "../DataTypes/Permissions";
 import { IResponse } from "../Response/ResponseObjects";
 import { DirectoryValues } from "../DataTypes/DirectoryValue";
-import { DirectoryEntry } from "../DataTypes/DirectoryEntry";
+import { createDirectoryValueAndFileStatePair, mkResponseDT, createFileValueWithFileStatePair } from "../MakeClasses/CreateClasses";
+import { initServerOperations } from "../ServerCacheOperations/InitServerOperation";
+import { GetRequestDT } from "../DataTypes/GetRequest";
+import { GetOperation } from "../ServerCacheOperations/GetOperation";
+import { UserAccount } from "../DataTypes/UserAccount";
 
-var RootCommitID : CommitID = new CommitID(Guid.create());
-var RootDirFid : FileID = new FileID(Guid.create());
-var RootStateID : StateID = new StateID(Guid.create());
-var RootMetaData : MetaData = new MetaData;
-RootMetaData.putUserPermission("user1",new Permissions("rwx"));
-var RootDir : DirectoryValues = new DirectoryValues();
+// Initialte the server
+var init : [Cache<CommitID, CommitDT> , CommitID[] , Cache<String, UserAccount>] = initServerOperations();
+var CommitCache : Cache<CommitID, CommitDT> = init[0];
+var listOfCommits : CommitID[] = init[1];
+var userCache : Cache<String, UserAccount> = init[2];
 
-var dirContent : FileContent = new FileContent(RootStateID,RootMetaData,RootDir);
-var RootChange : Change = new Change(RootDirFid,dirContent);
+// Get Root 
+var rootData : CommitDT = < CommitDT > CommitCache.get(listOfCommits[listOfCommits.length - 1]);
 
-var RootUpdate : Update = new Update(RootCommitID, [RootChange], [], new CommitID(Guid.create()));
-// Initialte the caches
-var CommitCache : Cache<CommitID, [Update, FileStatePair[]]> = new Cache<CommitID, [Update, FileStatePair[]]>();
-CommitCache.put(RootCommitID, [RootUpdate, [new FileStatePair(RootDirFid, RootStateID)]]);
+describe('Test the operations of the server', function() : void{
 
-var listOfCommits : CommitID[] = [RootCommitID];
-var userSessionPair : Cache<String, SessionID> = new Cache<String, SessionID>();
+  it('test for get request', function () : void{
+    console.log("\n\n ---------------------------------- Test 1 ---------------------------------- \n\n");
+    // Get the current data
+    var GT : GetRequestDT = new GetRequestDT(rootData.getSessionID(), [], rootData.getUpdates()[0].getNewCid(), rootData.getFileStatepairs());
+    var searchRes : ResponseDT<IResponse> = new GetOperation(GT).searchAndGetResponse(CommitCache, listOfCommits);
+    var searchResUpdate : Update = < Update > searchRes.object;
 
-console.log(RootStateID.toString());
+    // Display the head of the commit in string
+    console.log("---------------------- Display the head of the commit in string ----------------------")
+    for (let i = 0; i < searchResUpdate.getChanges().length; i++) {
+      const element = searchResUpdate.getChanges()[i];
+      console.log("change " + i + ": \n" + element.toString());
+    }
 
-describe('app', function() : void{
-    it('test1', function() : void{
+    // Test 1 Result 
+    console.log("---------------------------------- Test 1 Result ----------------------------------");
+    // expect(searchRes.message).to.equal("The commit ID sent by the user is same as the head of commit");
+    expect(searchResUpdate.getOldCid()).to.equal(listOfCommits[listOfCommits.length - 1]);
 
-        // Create initial 
-        var email: string = "abc.abc@abc";
-        var commitID : CommitID = new CommitID(Guid.create());
-        var sessionID : SessionID = new SessionID(Guid.create());
-        
-        //
-        listOfCommits.push(commitID);
-        userSessionPair.put(email, sessionID);
-
-        var login : LoginDT = new LoginDT(sessionID,commitID);
-
-        var fid : FileID = new FileID(Guid.create());
-        var stateID : StateID = new StateID(Guid.create());
-        var metaData : MetaData = new MetaData;
-        metaData.putUserPermission("user1",new Permissions("rwx"));
-        var val : LeafValue = new LeafValue("abc");
-
-        //
-        var content : FileContent = new FileContent(stateID,metaData, val);
-        var change : Change = new Change(fid,content);
-        var update: Update[] = [new Update(new CommitID(Guid.create()), [change], [],login.cId)];
-
-        //
-        var fileStatePair : FileStatePair[] = [new FileStatePair(fid, stateID)];
-        var CMT : CommitDT = new CommitDT(login.SessionID, update, fileStatePair);
-
-        var CommitRes : ResponseDT<IResponse> = new CommitOperations(CMT).commitData(CommitCache, listOfCommits);
-
-        
-      expect(CommitRes).to.equal('Hello World!');
-    });
   });
+
+  it('test for commit file request', function () : void {
+
+    console.log("\n\n ---------------------------------- Test 2 ---------------------------------- \n\n");
+    // Get the current data
+    var GT : GetRequestDT = new GetRequestDT(rootData.getSessionID(), [], rootData.getUpdates()[0].getNewCid(), rootData.getFileStatepairs());
+    var searchRes : ResponseDT<IResponse> = new GetOperation(GT).searchAndGetResponse(CommitCache, listOfCommits);
+    var searchResUpdate : Update = < Update > searchRes.object;
+
+    // Create new leaf file
+    var createFileResult : [ [Change , Change] , FileStatePair]= 
+        createFileValueWithFileStatePair("F1" , "user1" , "rwx" , "aab" , searchResUpdate.getChanges()[0]);
+
+    // Prepare to commit the new file
+    var fileCommitId : CommitID = new CommitID( Guid.create() );
+    var fileCommitUpdate = new Update(fileCommitId, createFileResult[0] , [] , searchResUpdate.getOldCid());
+    
+    // Commit new file
+    var commit : CommitDT = new CommitDT(new SessionID(Guid.create()), [fileCommitUpdate], [ createFileResult[1] ]);
+    var cmtResp : ResponseDT<IResponse> = new CommitOperations(commit).processCommit(CommitCache, listOfCommits);
+    
+    // Display the head of the commit in string
+    console.log("---------------------- Display the head of the commit in string ----------------------")
+    var resCommit : CommitDT = < CommitDT > CommitCache.get(fileCommitId);
+    var headUpdate : Update = resCommit.getUpdates()[0];
+
+    for (let i = 0; i < headUpdate.getChanges().length; i++) {
+    const element = headUpdate.getChanges()[i];
+    console.log("change " + i + ": \n" + element.toString());
+    }
+
+    // Test 2 Result
+    console.log("---------------------------------- Test 2 Result ----------------------------------");
+    expect(fileCommitId).to.equal(listOfCommits[listOfCommits.length - 1]);
+    expect("Successfully added the commit as the head of commit").to.equal(cmtResp.message);
+  });
+
+});

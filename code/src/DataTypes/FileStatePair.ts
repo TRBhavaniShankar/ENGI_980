@@ -4,16 +4,21 @@ import { StateID } from "./StateID";
 
 export class FileStatePair {
 
-    fid: FileID;
-    stid: StateID;
+    private fid: FileID;
+    private stid: StateID;
     
     constructor(fid: FileID, stid: StateID) {
         this.fid = fid;
         this.stid = stid;
     }
     
-    getFileStatePair() : [FileID, StateID]{
-        return [this.fid, this.stid];
+    getFileID() : FileID{
+        return this.fid;
+    }
+
+    
+    getStateID() : StateID{
+        return this.stid;
     }
 
     toString() : [String, String]{

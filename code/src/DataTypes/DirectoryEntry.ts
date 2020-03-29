@@ -4,16 +4,24 @@ import { FileID } from "./FileID";
 
 export class DirectoryEntry{
     
-    name: string;
-    fID : FileID;
+    private name: string;
+    private fID : FileID;
 
     constructor(name : string, fID : FileID) {
         this.fID = fID;
         this.name = name;
     }
 
-    getDirectoryEntry() : [string, FileID]{
-        return [this.name, this.fID];
+    public getDirectoryName() : string{
+        return this.name;
+    }
+
+    public getFileID() : FileID{
+        return this.fID;
+    }
+
+    toString() : string {
+        return "Name : " + this.name + ", FileID : " + this.fID.toString();
     }
 
 }

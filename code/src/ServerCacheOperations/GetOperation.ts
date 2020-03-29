@@ -12,6 +12,8 @@ import { FileID } from '../DataTypes/FileID';
 import { SessionID } from '../DataTypes/SessionID';
 import { CommitID } from '../DataTypes/CommitID';
 import { Failure, IResponse } from '../Response/ResponseObjects';
+import { CommitDT } from '../DataTypes/Commit';
+import { getUpdateClassInstance } from '../MakeClasses/CreateClasses';
 
 export class GetOperation{
 
@@ -38,23 +40,23 @@ export class GetOperation{
       * @param listOfCommits : This is the cache which stores the list of commit, which is a series in the array
       */
 
-    public searchAndGetResponse(CommitCache : Cache<CommitID, [Update, FileStatePair[]]>, 
+    public searchAndGetResponse(CommitCache : Cache<CommitID, CommitDT>, 
                                 listOfCommits : CommitID[]) : 
     ResponseDT<IResponse> {
         
         var cids : CommitID[] = listOfCommits;
         
         // Get the head of commits
-        var CommitCacheValue : [Update, FileStatePair] = CommitCache.get(cids[cids.length -1 ]);
-        var update : Update = CommitCacheValue[0];
+        var CommitCacheValue : CommitDT = < CommitDT > CommitCache.get(cids[cids.length -1 ]);
+        var update : Update = getUpdateClassInstance( CommitCacheValue.getUpdates()[0] );
 
         // Check if the cid provided by the user is already is the head of the commit
         if(cids.indexOf(this.cid) != -1){
             if (cids.indexOf(this.cid) == cids.length -1){
                 
                 // The cid provided by the user is the head of the commits
-                var updateRes : Update = new Update(cids[cids.length -1], update.changes, update.deletes, this.cid);
-                return new ResponseDT<Update>(200, "The commit ID sent by the user is same as the head of commit","Update", updateRes);
+                var updateRes : Update = new Update(cids[cids.length -1], update.getChanges(), update.getDelets(), this.cid);
+                return new ResponseDT<Update>(200, "The commit ID sent by the user is same as the head of commit", "Update", updateRes);
 
             }else{
                 
@@ -64,25 +66,25 @@ export class GetOperation{
 
                 // List of FID that user needs with the list of FIDs the user has in pairs
                 this.currentState.forEach(Element => {
-                    fIDsToGet.push(Element.fid);
+                    fIDsToGet.push(Element.getFileID());
                 });
 
                 var changes : Change[] = [];
 
                 // Get all the changes that user needs from the list of FIDs that user needs and has. From the head of the commit
                 fIDsToGet.forEach(needEle => {
-                    update.changes.forEach(Element => {
+                    update.getChanges().forEach(Element => {
                         
                         changes.concat(
-                            update.changes.filter( filterEle =>{
-                                Element.fid.isEqual(needEle);
+                            update.getChanges().filter( filterEle =>{
+                                Element.getFileID().isEqual(needEle);
                             })
                         )
 
                     })
                 })
 
-                var updateRes : Update = new Update(new_cid, changes, update.deletes, this.cid);
+                var updateRes : Update = new Update(new_cid, changes, update.getDelets(), this.cid);
                 return new ResponseDT<Update>(200, "A new update is present","Update", updateRes);
             }
         }else{

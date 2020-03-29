@@ -1,16 +1,21 @@
-import { fileState } from "./Value";
-import { FileStatePair } from "./FileStatePair";
+import { FileState } from "./Value";
 
-export class LeafValue implements fileState{
+export class LeafValue implements FileState{
     
-    value : string;
+    private value : string;
 
     constructor(value : string){
         this.value = value;
     }
 
-    toString():string{
+    toString(): string {
         return this.value;
     }
+
+    getValue(): string {
+        return this.value;
+    }
+
+    
 
 }

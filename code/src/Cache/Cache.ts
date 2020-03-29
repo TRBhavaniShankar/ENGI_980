@@ -3,10 +3,10 @@ export class Cache<U, T>{
     private hashTable : Map<U, T> = new Map<U, T>();
     private maxEntry : number = 200;
 
-    public get(key: U) : T | any  {
+    public get(key: U) : T | undefined  {
 
         const hasKey : boolean = this.hashTable.has(key);
-        let entry : T | any ;
+        let entry : T | undefined ;
 
         if(hasKey){
             entry = this.hashTable.get(key);

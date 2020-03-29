@@ -1,17 +1,12 @@
 import { Update } from "./Update"
 import { FileStatePair } from "./FileStatePair"
-import { Guid } from "guid-typescript";
-import { Cache } from '../Cache/Cache';
-import { FileContent } from './Content';
-import { Change } from "./Change";
-import { Delete } from "./Delete";
 import { SessionID } from "./SessionID";
 
 export class CommitDT{
 
-    sessionid: SessionID;
-    updates: Update[];
-    currentState: FileStatePair[];
+    private sessionid: SessionID;
+    private updates: Update[];
+    private currentState: FileStatePair[];
 
     constructor(sessionid: SessionID, updates: Update[], currentState: FileStatePair[]){
 
@@ -20,8 +15,20 @@ export class CommitDT{
         this.currentState = currentState;
     }
     
-    toString() : String {
+    public toString() : String {
         return "Commit DT : " + this.sessionid;
+    }
+
+    public getUpdates() : Update[]{
+        return this.updates;
+    }
+
+    public getFileStatepairs() : FileStatePair[]{
+        return this.currentState;
+    }
+
+    public getSessionID() : SessionID{
+        return this.sessionid;
     }
 
 }

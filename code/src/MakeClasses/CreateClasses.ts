@@ -1,15 +1,13 @@
 import { GetRequestDT } from "../DataTypes/GetRequest";
-import {FileStatePair} from '../DataTypes/FileStatePair';
+import { FileStatePair } from '../DataTypes/FileStatePair';
 import { CommitDT } from "../DataTypes/Commit";
 import { Update } from "../DataTypes/Update";
-import { Guid } from "guid-typescript";
 import { Change } from "../DataTypes/Change";
 import { Delete } from "../DataTypes/Delete";
 import { FileContent } from "../DataTypes/Content";
 import { LoginDT } from "../DataTypes/LoginDT";
 import { ResponseDT } from "../Response/ResponseDT";
 import { DirectoryValues } from "../DataTypes/DirectoryValue";
-import { SessionID } from "../DataTypes/SessionID";
 import { FileID } from "../DataTypes/FileID";
 import { CommitID } from "../DataTypes/CommitID";
 import { StateID } from "../DataTypes/StateID";
@@ -17,216 +15,138 @@ import { MetaData } from "../DataTypes/MetaData";
 import { Permissions } from "../DataTypes/Permissions";
 import { LeafValue } from "../DataTypes/LeafValue";
 import { DirectoryEntry } from "../DataTypes/DirectoryEntry";
-import { fileState } from "../DataTypes/Value";
+import { FileState } from "../DataTypes/Value";
+import { Guid } from "guid-typescript";
 
 /**
  * Make CommitRequest class
  */
-export class mkCommitRequest{
+export function getCommitRequestClassInstance(reqCommitDT : CommitDT) : CommitDT{
 
-    reqCommitDT : CommitDT;
-
-    constructor(reqCommitDT : CommitDT){
-        this.reqCommitDT = reqCommitDT;
-    }
-
-    getClassInstance() : CommitDT{
-
-        var sid : SessionID = this.reqCommitDT.sessionid;
-        var updates: Update[] = new mkUpdates(this.reqCommitDT.updates).getClassInstance();
-
-        var currentState: FileStatePair[] = new mkFileStatePairs(this.reqCommitDT.currentState).getClassInstance();
-
-        return new CommitDT(sid, updates, currentState);
-    }
+    return new CommitDT(
+        reqCommitDT.getSessionID(),
+        getUpdatesClassInstance(reqCommitDT.getUpdates()),
+        getFileStatePairsClassInstance(reqCommitDT.getFileStatepairs())
+    );
 
 }
 
 /**
  * Make GetRequest class
  */
-export class mkGetRequest{
+export function getGetRequestClassInstance(reqGetRequestDT : GetRequestDT) : GetRequestDT{
 
-    reqGetRequestDT : GetRequestDT;
-
-    constructor(reqGetRequestDT : GetRequestDT){
-        this.reqGetRequestDT = reqGetRequestDT;
-    }
-
-    getClassInstance() : GetRequestDT{
-
-        var sid : SessionID = this.reqGetRequestDT.sid;
-        var need: FileID[] = this.reqGetRequestDT.need;
-        var cid : CommitID = this.reqGetRequestDT.cid;
-        var currentState: FileStatePair[] = new mkFileStatePairs(this.reqGetRequestDT.currentState).getClassInstance();
-
-        return new GetRequestDT(sid, need, cid, currentState);
-    }
-
+    return new GetRequestDT(
+        reqGetRequestDT.sid,
+        reqGetRequestDT.need,
+        reqGetRequestDT.cid,
+        getFileStatePairsClassInstance(reqGetRequestDT.currentState)
+    );
 }
 
 /**
  * Make FileStatePairs class
  */
-export class mkFileStatePairs{
+export function getFileStatePairsClassInstance(currentState: FileStatePair[]): FileStatePair[]{
 
-    currentState: FileStatePair[];
+    var fStatePair : FileStatePair[] = [];
 
-    constructor(reqcurrentState: FileStatePair[]){
-        this.currentState = reqcurrentState;
+    for (let i = 0; i < currentState.length; i++) {
+        const element = currentState[i];
+
+        fStatePair.push(getFileStatePairClassInstance(element));
     }
 
-    getClassInstance(): FileStatePair[]{
-
-        var fStatePair : FileStatePair[] = [];
-
-        for (let i = 0; i < this.currentState.length; i++) {
-            const element = this.currentState[i];
-
-            fStatePair.push(new mkFileStatePair(element).getClassInstance());
-        }
-
-        return fStatePair;
-    }
+    return fStatePair;
 
 }
 
-export class mkFileStatePair{
-    fileStatePair : FileStatePair;
-    constructor(fileStatePair : FileStatePair){
-        this.fileStatePair = fileStatePair
-    }
-
-    getClassInstance() : FileStatePair{
-        return new FileStatePair(
-            new FileID(this.fileStatePair.fid.getGuid()),
-            new StateID(this.fileStatePair.stid.getGuid())
-        )
-    }
-
+export function getFileStatePairClassInstance(fileStatePair : FileStatePair) : FileStatePair{
+    return new FileStatePair(
+        new FileID(fileStatePair.getFileID().getGuid()),
+        new StateID(fileStatePair.getStateID().getGuid())
+    )
 }
+
 
 /**
  * Make Update class
  */
-class mkUpdates{
-    updates: Update[];
+export function getUpdatesClassInstance(updates: Update[]) : Update[]{
 
-    constructor(updates: Update[]) {
-        this.updates = updates;
-    }
+    var updateClassInstance : Update[] = [];
 
-    getClassInstance() : Update[]{
+    updates.forEach(element => {
 
-        var updateClassInstance : Update[] = [];
+        updateClassInstance.push(getUpdateClassInstance(element));
+    });
 
-        this.updates.forEach(element => {
-
-            updateClassInstance.push(new mkUpdate(element).getClassInstance());
-        });
-
-        return updateClassInstance;
-    }
+    return updateClassInstance;
 }
 
 /**
  * Make Change class
  */
-export class mkChanges{
+export function getChangesClassInstance(changes : Change[]) : Change[]{
+    var changesClass : Change[] = [];
 
-    changes : Change[];
-
-    constructor(changes : Change[]){
-        this.changes = changes;
+    for (let i = 0; i < changes.length; i++) {
+        const element = changes[i];
+        changesClass.push(new Change(element.getFileID(), getFileContentClassInstance(element.getContent())));
     }
 
-    getClassInstance() : Change[]{
-        var changesClass : Change[] = [];
-
-        for (let i = 0; i < this.changes.length; i++) {
-            const element = this.changes[i];
-            changesClass.push(new Change(element.fid, new mkFileContent(element.content).getClassInstance()));
-        }
-
-        return changesClass;
-    }
+    return changesClass;
 }
 
 /**
  * Make FileCOntent class
  */
-class mkFileContent{
+export function getFileContentClassInstance(fileContent: FileContent) : FileContent {
 
-    fileContent: FileContent;
-
-    constructor(fileContent: FileContent){
-        this.fileContent = fileContent;
-    }
-
-    getClassInstance() : FileContent {
-
-        // prepare the metadata
-        var metaData : MetaData = new MetaData();
-        for (let j = 0; j < this.fileContent.metaData.Users.length; j++) {
-            const user : string =  this.fileContent.metaData.Users[j];
-            
-            const perm  : Permissions | undefined =  this.fileContent.metaData.getUserPermissions(user);
-            if(perm instanceof Permissions){
-                metaData.putUserPermission(user, perm);
-            }
-
+    // prepare the metadata
+    var metaData : MetaData = new MetaData();
+    for (let j = 0; j < fileContent.getMetaData().Users.length; j++) {
+        const user : string =  fileContent.getMetaData().Users[j];
+        
+        const perm  : Permissions | undefined =  fileContent.getMetaData().getUserPermissions(user);
+        if(perm instanceof Permissions){
+            metaData.putUserPermission(user, perm);
         }
 
-        // prepare the value
-        var value : fileState = this.fileContent.value;
-        if (  this.fileContent.value instanceof DirectoryValues ){
-            value  = new mkDirectoryValue( this.fileContent.value).getClassInstance();
-            
-        }else if( this.fileContent.value instanceof LeafValue){
-            value = new LeafValue( this.fileContent.value.value);
-        }
-
-        return new FileContent(new StateID(this.fileContent.stid.getGuid()), metaData, value);
     }
+
+    // prepare the value
+    var value : FileState = fileContent.getValue();
+    if (  value instanceof DirectoryValues ){
+
+        value = getDirectoryValueClassInstance( value );
+        
+    }else if( fileContent.getValue() instanceof LeafValue){
+        value = new LeafValue( value.toString() );
+    }
+
+    return new FileContent(new StateID(fileContent.getStid().getGuid()), metaData, value);
 
 }
 
 /**
  * Make Delete class
  */
-export class mkDeletes{
+export function getDeleteClassInstance(deletes : Delete[]) : Delete[]{
 
-    deletes : Delete[];
+    var deleteResponce : Delete[] = [];
 
-    constructor(deletes : Delete[]){
-        this.deletes = deletes;
+    for (let i = 0; i < deletes.length; i++) {
+        const element = deletes[i];
+        deleteResponce.push(new Delete( new FileStatePair( element.getFileID() , element.getStateID() )));
     }
 
-    getClassInstance() : Delete[]{
-
-        var deleteResponce : Delete[] = [];
-
-        for (let i = 0; i < this.deletes.length; i++) {
-            const element = this.deletes[i];
-            deleteResponce.push(new Delete( new FileID( element.fid.getGuid() )));
-        }
-
-        return deleteResponce;
-    }
+    return deleteResponce;
 
 }
 
-export class mkLogginDT{
-    
-    loginRes : LoginDT
-
-    constructor(loginRes : LoginDT ){
-        this.loginRes = loginRes;
-    }
-
-    getClassInstance(): LoginDT{
-        return new LoginDT(this.loginRes.SessionID, this.loginRes.cId);
-    }
+export function getLogginDTClassInstance(loginRes : LoginDT): LoginDT{
+    return new LoginDT(loginRes.SessionID, loginRes.cId);   
 }
 
 export class mkResponseDT<type>{
@@ -243,42 +163,83 @@ export class mkResponseDT<type>{
 }
 
 
-export class mkDirectoryValue{
+export function getDirectoryValueClassInstance(dirVal : DirectoryValues): DirectoryValues{
+
+    var dirObj : DirectoryValues = new DirectoryValues();
+    var dirEntries : DirectoryEntry[] = dirVal.getValue();
     
-    dirVal : DirectoryValues
-
-    constructor(dirVal : DirectoryValues){
-        this.dirVal = dirVal;
-    }
-
-    getClassInstance(): DirectoryValues{
-
-        var dirObj : DirectoryValues = new DirectoryValues();
-
-        this.dirVal.entries.forEach(ele => {
-            dirObj.push(new DirectoryEntry(ele.name, new FileID(ele.fID.getGuid())));
-        });
-
-        return dirObj;
+    
+    for (let i = 0; i < dirVal.getValue().length; i++) {
+        const ele = dirVal.getValue()[i];
         
+        dirObj.push(new DirectoryEntry(ele.getDirectoryName(), new FileID(ele.getFileID().getGuid())));
     }
+
+    return dirObj;
+
 }
 
-export class mkUpdate{
-    update : Update
-    constructor(update : Update){
-        this.update = update;
-    }
+export function getUpdateClassInstance(update : Update) : Update {
+           
+    return new Update(
+        new CommitID(update.getNewCid().getGuid()), 
+        getChangesClassInstance(update.getChanges()),  
+        getDeleteClassInstance(update.getDelets()), 
+        new CommitID(update.getOldCid().getGuid())
+    );
 
-    getClassInstance() : Update {
-        
-        
-        return new Update(
-            new CommitID(this.update.new_cid.getGuid()), 
-            new mkChanges(this.update.changes).getClassInstance(),  
-            new mkDeletes(this.update.deletes).getClassInstance(), 
-            new CommitID( this.update.old_cid.getGuid())
-            );
-    }
+}
 
+//----------------------------------------- Helper functions to create files -----------------------------------------
+
+export function createDirectoryValueAndFileStatePair( user : string, permission : string, dirEntries : DirectoryEntry[] ) : 
+    [Change,FileStatePair]{
+
+    // Get all the ID for the file
+    var fileStatePair : FileStatePair = new FileStatePair(new FileID(Guid.create()), new StateID(Guid.create()));
+
+    // Create metadata
+    var metaData : MetaData = new MetaData();
+    metaData.putUserPermission(user,new Permissions(permission));
+
+    // Create directory file change
+    var directory : DirectoryValues = new DirectoryValues();
+
+    // If there are child elements in the directory, then add them to this directory
+    for (let i = 0; i < dirEntries.length; i++) {
+        const element = dirEntries[i];
+        directory.push(element);
+    }
+    
+
+    var dirContent : FileContent = new FileContent(fileStatePair.getStateID(), metaData, directory);
+
+    return [new Change(fileStatePair.getFileID(), dirContent) , fileStatePair];
+
+}
+
+export function createFileValueWithFileStatePair( fileName : string , user : string, permission : string, leafValue : string , 
+    parentDirChange : Change ) : [[Change , Change] , FileStatePair] {
+
+    // New File id, state id and metadata for the new file
+    var fileStatePair : FileStatePair = new FileStatePair(new FileID(Guid.create()) , new StateID(Guid.create()) );
+    var fileMetaData : MetaData = new MetaData();
+    fileMetaData.putUserPermission(user, new Permissions(permission));
+
+    // New File Content
+    var fileContent : FileContent = new FileContent(fileStatePair.getStateID() , fileMetaData, new LeafValue(leafValue));
+
+    // Change object for the new file
+    var fileChnage : Change = new Change( fileStatePair.getFileID() , fileContent );
+
+    // Add the file info the parent directory as file 
+    var fileParentDirEnt : DirectoryEntry = new DirectoryEntry( fileName , fileStatePair.getFileID());
+    var parentDirectory : DirectoryValues = < DirectoryValues > parentDirChange.getContent().getValue();
+    parentDirectory.push(fileParentDirEnt);
+    
+    // Create new parent content object with updated state id, directory value
+    var parentDirContent = new FileContent( new StateID(Guid.create()), parentDirChange.getContent().getMetaData() , parentDirectory);
+    parentDirChange = new Change( parentDirChange.getFileID(), parentDirContent );
+
+    return [[parentDirChange , fileChnage] , fileStatePair];
 }

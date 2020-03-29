@@ -1,4 +1,4 @@
-import { fileState } from './Value';
+import { FileState } from './Value';
 import { MetaData } from './MetaData';
 import { FileStatePair } from './FileStatePair';
 import { Guid } from "guid-typescript";
@@ -6,22 +6,31 @@ import { StateID } from './StateID';
 
 export class FileContent {
     
-    stid : StateID;
-    metaData : MetaData;
-    value: fileState;
+    private stid : StateID;
+    private metaData : MetaData;
+    private value: FileState;
 
-    constructor(stid : StateID, metaData : MetaData, value: fileState){
+    constructor(stid : StateID, metaData : MetaData, value: FileState){
         this.metaData = metaData;
         this.stid = stid;
         this.value = value;
     }
 
-    getContent() : [StateID, MetaData, fileState]{
-        return [this.stid, this.metaData, this.value];
+    public getStid() : StateID{
+        return this.stid;
     }
 
-    toString() : string{
-        return this.stid.toString() + "," + this.metaData.toString() +","+ this.value.toString();
+    public getMetaData() : MetaData{
+        return this.metaData;
+    }
+
+    public getValue() : FileState {
+        return this.value;
+    }
+
+    public toString() : string{
+        return " State ID : " +this.stid.toString() + ",\n Metadata : " 
+            + this.metaData.toString() +", \n Value : "+ this.value.toString();
     }
 
 }
