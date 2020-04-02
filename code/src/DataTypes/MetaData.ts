@@ -3,8 +3,8 @@ import { Permissions } from "./Permissions";
 export class MetaData{
 
     public Users : string[] = [];
-    private UserPermissionsDir : Map<string, Permissions> = new Map<string, Permissions>();;
-    
+    private UserPermissionsDir : Map<string, Permissions> = new Map<string, Permissions>();
+
     public putUserPermission(User : string, Permission : Permissions){
         this.Users.push(User);
         this.UserPermissionsDir.set(User,Permission);

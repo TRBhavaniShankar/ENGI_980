@@ -32,13 +32,13 @@ var searchRes : ResponseDT<IResponse> = new GetOperation(GT).searchAndGetRespons
 
 var searchResUpdate : Update =  < Update> searchRes.object ;
 
-var createFileResult : [ [Change , Change] , FileStatePair]= 
+var createFileResult : [ Change , Change , FileStatePair]= 
     createFileValueWithFileStatePair("F1" , "user1" , "rwx" , "aab" , searchResUpdate.getChanges()[0]);
 
 var fileCommitId : CommitID = new CommitID( Guid.create() );
-var fileCommitUpdate = new Update(fileCommitId, createFileResult[0] , [] , searchResUpdate.getOldCid());
+var fileCommitUpdate = new Update(fileCommitId, [ createFileResult[0] , createFileResult[1] ], [] , searchResUpdate.getOldCid());
 
-var commit : CommitDT = new CommitDT(new SessionID(Guid.create()), [fileCommitUpdate], [ createFileResult[1] ]);
+var commit : CommitDT = new CommitDT(new SessionID(Guid.create()), [fileCommitUpdate], [ createFileResult[2] ]);
 
 var cmtResp : ResponseDT<IResponse> = new CommitOperations(commit).processCommit(CommitCache, listOfCommits);
 

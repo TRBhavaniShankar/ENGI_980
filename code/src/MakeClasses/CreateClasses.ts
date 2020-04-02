@@ -219,7 +219,7 @@ export function createDirectoryValueAndFileStatePair( user : string, permission 
 }
 
 export function createFileValueWithFileStatePair( fileName : string , user : string, permission : string, leafValue : string , 
-    parentDirChange : Change ) : [[Change , Change] , FileStatePair] {
+    parentDirChange : Change ) : [Change , Change, FileStatePair] {
 
     // New File id, state id and metadata for the new file
     var fileStatePair : FileStatePair = new FileStatePair(new FileID(Guid.create()) , new StateID(Guid.create()) );
@@ -241,5 +241,24 @@ export function createFileValueWithFileStatePair( fileName : string , user : str
     var parentDirContent = new FileContent( new StateID(Guid.create()), parentDirChange.getContent().getMetaData() , parentDirectory);
     parentDirChange = new Change( parentDirChange.getFileID(), parentDirContent );
 
-    return [[parentDirChange , fileChnage] , fileStatePair];
+    return [parentDirChange , fileChnage , fileStatePair];
+}
+
+export function createFile(fileName : string , user : string, permission : string, leafValue : string ) :
+     [ FileStatePair, Change, DirectoryEntry] {
+
+    var fileStatePair : FileStatePair = new FileStatePair(new FileID(Guid.create()) , new StateID(Guid.create()) );
+    var fileMetaData : MetaData = new MetaData();
+    fileMetaData.putUserPermission(user, new Permissions(permission));
+
+    // New File Content
+    var fileContent : FileContent = new FileContent(fileStatePair.getStateID() , fileMetaData, new LeafValue(leafValue));
+
+    // Change object for the new file
+    var fileChange : Change = new Change( fileStatePair.getFileID() , fileContent );
+
+    // Add the file info the parent directory as file 
+    var fileDirEnt : DirectoryEntry = new DirectoryEntry( fileName , fileStatePair.getFileID());
+
+    return [fileStatePair, fileChange, fileDirEnt];
 }

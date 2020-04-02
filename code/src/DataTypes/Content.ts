@@ -28,6 +28,10 @@ export class FileContent {
         return this.value;
     }
 
+    public setNewStateID(newStateID : StateID){
+        this.stid = newStateID;
+    }
+
     public toString() : string{
         return " State ID : " +this.stid.toString() + ",\n Metadata : " 
             + this.metaData.toString() +", \n Value : "+ this.value.toString();

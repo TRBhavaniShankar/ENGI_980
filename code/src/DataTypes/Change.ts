@@ -1,6 +1,7 @@
 import { Guid } from "guid-typescript";
 import { FileContent } from "./Content";
 import { FileID } from "./FileID";
+import { StateID } from "./StateID";
 
 export class Change {
     
@@ -22,6 +23,10 @@ export class Change {
 
     public toString() : string{
         return "File ID : " + this.fid.toString() + " , \n" + "File Content : \n" + this.content.toString() + "\n";
+    }
+
+    public setNewStateID(newStateID : StateID){
+        this.content.setNewStateID(newStateID);
     }
 
 }
