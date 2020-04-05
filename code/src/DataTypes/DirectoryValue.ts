@@ -11,6 +11,9 @@ export class DirectoryValues implements FileState{
 
     public concatnate(entries: DirectoryEntry[]){
         this.entries.concat(entries);
+        for (let i = 0; i < entries.length; i++) {
+            this.push(entries[i]);
+        }
     }
 
     public toString(): string {

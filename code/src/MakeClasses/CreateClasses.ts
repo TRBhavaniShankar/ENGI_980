@@ -192,7 +192,7 @@ export function getUpdateClassInstance(update : Update) : Update {
 
 //----------------------------------------- Helper functions to create files -----------------------------------------
 
-export function createDirectoryValueAndFileStatePair( user : string, permission : string, dirEntries : DirectoryEntry[] ) : 
+export function createDirectoryValueAndFileStatePair( user : string, permission : string ) : 
     [Change,FileStatePair]{
 
     // Get all the ID for the file
@@ -204,14 +204,6 @@ export function createDirectoryValueAndFileStatePair( user : string, permission 
 
     // Create directory file change
     var directory : DirectoryValues = new DirectoryValues();
-
-    // If there are child elements in the directory, then add them to this directory
-    for (let i = 0; i < dirEntries.length; i++) {
-        const element = dirEntries[i];
-        directory.push(element);
-    }
-    
-
     var dirContent : FileContent = new FileContent(fileStatePair.getStateID(), metaData, directory);
 
     return [new Change(fileStatePair.getFileID(), dirContent) , fileStatePair];

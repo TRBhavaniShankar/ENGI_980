@@ -83,32 +83,29 @@ export class CommitOperations{
                     // New changes
                     for (let i = 0; i < augmentedData.getChanges().length; i++) {
                         const changeElement = augmentedData.getChanges()[i];
-                        
-                        for (let j = 0; j < tempHeadUpdate.getChanges().length; j++) {
-                            const tempHeadChange = tempHeadUpdate.getChanges()[j];
-
-                            if(tempHeadChange.getFileID().isEqual(changeElement.getFileID())){
-                                changes.push(tempHeadChange);
-                            }
-                    
-                        }
-
-                    }
-
-                    // New deletes
-                    for (let i = 0; i < augmentedData.getDelets().length; i++) {
-                        const deleteElement = augmentedData.getDelets()[i];
+                        var isDeletedInHOC : Boolean = false;
                         
                         for (let j = 0; j < tempHeadUpdate.getDelets().length; j++) {
                             const tempHeadDelete = tempHeadUpdate.getDelets()[j];
-
-                            if(tempHeadDelete.getFileID().isEqual(deleteElement.getFileID())){
+                            isDeletedInHOC = tempHeadDelete.getFileID().isEqual(changeElement.getFileID());
+                            if(isDeletedInHOC){
                                 deletes.push(tempHeadDelete);
-                            }
-                    
+                            } 
                         }
 
+                        if (!isDeletedInHOC) {
+                            for (let j = 0; j < tempHeadUpdate.getChanges().length; j++) {
+                                const tempHeadChange = tempHeadUpdate.getChanges()[j];
+    
+                                if(tempHeadChange.getFileID().isEqual(changeElement.getFileID())){
+                                    changes.push(tempHeadChange);
+                                }
+                        
+                            }
+                        }
+                        
                     }
+                    
 
                     var updatedData : Update = new Update(augmentedData.getNewCid(), changes, deletes, augmentedData.getOldCid());
 
@@ -132,7 +129,7 @@ export class CommitOperations{
                     // a new head, CD1. It then replies with a "files" response. (The interpretation of the "files" response is as above.)
 
                     // As the newMergedHead points to the CommitCache, we need to make a new object for update in newMergedHead
-                    var newMergedHead = getUpdateClassInstance(this.mergerUnknownFiles(tempHeadUpdate, augmentedData));
+                    var newMergedHead : Update = getUpdateClassInstance(this.mergerUnknownFiles(tempHeadUpdate, augmentedData));
 
                     var newHead : Update = this.commitData(tempHeadUpdate, newMergedHead, CommitCache, listOfCommits);
 
@@ -258,22 +255,28 @@ export class CommitOperations{
      * @returns UpdateFileStatepair : Returns a tuple of Update which is processed augmentation.  
      *                                And list of filestate pair.
      */
-    private mergerUnknownFiles(headOfCommit : Update, augmentedData : Update) : Update{
+    private mergerUnknownFiles(headOfCommitOrig : Update, augmentedDataOrig : Update) : Update{
         
         // Remove all the deleted files in the request commit which are already deleted in the head of commits
         // Which consists of same state id
+        var newMergedChanges : Change[] = [];
+        var newmergedDelets : Delete[] = [];
+        var headOfCommit : Update = getUpdateClassInstance( headOfCommitOrig );
+        var augmentedData : Update = getUpdateClassInstance( augmentedDataOrig );
+
         for (let k = 0; k < headOfCommit.getDelets().length; k++) {
             const Element = headOfCommit.getDelets()[k];
             for (let i = 0; i < augmentedData.getChanges().length; i++) {
                 const fileterElement = augmentedData.getChanges()[i];
                 // if file id and state id are equal to the one which is in the deleted items in
                 // the head of commit then it is considered as deleted
-                if(fileterElement.getFileID().isEqual(Element.getFileID()) &&
-                   fileterElement.getContent().getStid().isEqual(Element.getStateID())
-                   ){
-                    augmentedData.getChanges().splice(i, 1);
-                }else{
-                    headOfCommit.getDelets().splice(k, 1);
+                if(fileterElement.getFileID().isEqual(Element.getFileID())){
+                    if(fileterElement.getContent().getStid().isEqual(Element.getStateID())
+                    ){
+                        newmergedDelets.push(new Delete(new FileStatePair(fileterElement.getFileID(),fileterElement.getContent().getStid())));
+                    }else{
+                        newMergedChanges.push(fileterElement);
+                    }
                 }
             }
         }
@@ -284,72 +287,87 @@ export class CommitOperations{
             for (let i = 0; i < headOfCommit.getChanges().length; i++) {
                 const fileterElement = headOfCommit.getChanges()[i];
                 if(fileterElement.getFileID().isEqual(Element.getFileID()) ){
-                    headOfCommit.getChanges().splice(i, 1);
-                    headOfCommit.getDelets().push(Element);
+                    newmergedDelets.push(Element);
                 }
             }
         }
 
         // Merger the commits
-        var newDir : DirectoryValues = new DirectoryValues();
-        var newChanges : Change[] = [];
+        
 
         for (let i = 0; i < augmentedData.getChanges().length; i++) {
             const augElement = augmentedData.getChanges()[i];
+            
+            var augFileState : FileState = augElement.getContent().getValue();
 
+            var isAdded : boolean = false;
             for (let j = 0; j < headOfCommit.getChanges().length; j++) {
                 const hocEle = headOfCommit.getChanges()[j];
-
-                var augFileState : FileState = augElement.getContent().getValue();
                 var hocFileState : FileState = hocEle.getContent().getValue();
 
                 if(augElement.getFileID().isEqual(hocEle.getFileID()) 
-                    && augFileState instanceof DirectoryValues 
-                    && hocFileState instanceof DirectoryValues){
-                 
-                     // If it DirectoryValues
-
-                     var tempReqDirVal : DirectoryValues = getDirectoryValueClassInstance(augFileState);
-                     var tempHOCDirVal : DirectoryValues = getDirectoryValueClassInstance(hocFileState);
+                    && hocFileState instanceof DirectoryValues
+                    && augFileState instanceof DirectoryValues){
                     
-                     // If the head of the commit consists of the file id which is same as the one requested from user
-                     // then the file id which is requested by user will be added to the 
-                     var tempReqDirEntries : DirectoryEntry[] = tempReqDirVal.getValue();
-                     var tempHocDirEntries : DirectoryEntry[] = tempHOCDirVal.getValue();
+                    var newDir : DirectoryValues = new DirectoryValues();
+                    // If it DirectoryValues
+                    var tempReqDirVal : DirectoryValues = getDirectoryValueClassInstance(augFileState);
+                    var tempHOCDirVal : DirectoryValues = getDirectoryValueClassInstance(hocFileState);
+                    
+                    // If the head of the commit consists of the file id which is same as the one requested from user
+                    // then the file id which is requested by user will be added to the 
+                    var tempReqDirEntries : DirectoryEntry[] = tempReqDirVal.getValue();
+                    var tempHocDirEntries : DirectoryEntry[] = tempHOCDirVal.getValue();
+                    
+                    //copy
+                    var tempReqDirVal_copy : DirectoryValues = getDirectoryValueClassInstance(augFileState);
+                    var tempHOCDirVal_copy : DirectoryValues = getDirectoryValueClassInstance(hocFileState);
+                    var tempReqDirEntries_copy : DirectoryEntry[] = tempReqDirVal_copy.getValue();
+                    var tempHocDirEntries_copy : DirectoryEntry[] = tempHOCDirVal_copy.getValue();
 
-                     for (let k = 0; k < tempReqDirEntries.length; k++) {
-                         const reqDir = tempReqDirEntries[k];
+                    for (let k = 0; k < tempReqDirEntries.length; k++) {
+                        const reqDir = tempReqDirEntries[k];
 
-                         for (let l = 0; l < tempHocDirEntries.length; l++) {
-                             const hocEle = tempHocDirEntries[l];
-                             
-                             if(reqDir.getFileID().isEqual(hocEle.getFileID())){
+                        for (let l = 0; l < tempHocDirEntries.length; l++) {
+                            const hocEle = tempHocDirEntries[l];
+                            
+                            if(reqDir.getFileID().isEqual(hocEle.getFileID())){
                                 newDir.push(reqDir);
-                                tempReqDirEntries.splice(k, 1);
-                                tempReqDirEntries.splice(l, 1);
+                                for (let p = 0; p < tempReqDirEntries_copy.length; p++) {
+                                    const element = tempReqDirEntries_copy[p];
+                                    if (reqDir.getFileID().isEqual(element.getFileID())) {
+                                        tempReqDirEntries_copy.splice(p, 1);
+                                    }   
+                                }
+
+                                for (let q = 0; q < tempHocDirEntries_copy.length; q++) {
+                                    const element = tempHocDirEntries_copy[q];
+                                    if (reqDir.getFileID().isEqual(element.getFileID())) {
+                                        tempHocDirEntries_copy.splice(q, 1);
+                                    }   
+                                }
                             }
+                        }
+                    }
 
-                         }
+                    newDir.concatnate(tempHocDirEntries_copy);
+                    newDir.concatnate(tempReqDirEntries_copy);
 
-                     }
+                    var newContent: FileContent = new FileContent(augElement.getContent().getStid(), augElement.getContent().getMetaData(),newDir);
 
-                     // Concatinate remaining file id's
-                     newDir.concatnate(tempHOCDirVal.getValue());
-                     newDir.concatnate(tempReqDirVal.getValue());
-
-                     var newContent: FileContent = new FileContent(augElement.getContent().getStid(), augElement.getContent().getMetaData(),newDir);
-
-                     newChanges.push(new Change(augElement.getFileID(), newContent));  
+                    newMergedChanges.push(new Change(augElement.getFileID(), newContent));  
+                    isAdded = true;
                 }
-                else{
-                    // If it is a new change just add it to the new head, as the change is a new request from the user
-                    newChanges.push(augElement);
-                    
-                }
-            }   
+            }
+
+            if(!isAdded){
+                // If it is a new change just add it to the new head, as the change is a new request from the user
+                newMergedChanges.push(augElement);
+            }
+            
         }
 
-        return new Update(augmentedData.getNewCid(), newChanges, headOfCommit.getDelets(), headOfCommit.getNewCid());
+        return new Update(augmentedData.getNewCid(), newMergedChanges, newmergedDelets, headOfCommit.getNewCid());
         
     }
 
@@ -373,28 +391,48 @@ export class CommitOperations{
                        listOfCommits : CommitID[]) : Update{
 
         //
+        var deletes : Delete[] = tempHead.getDelets();
+
         for (let i = 0; i < tempHead.getChanges().length; i++) {
             const changesElement = tempHead.getChanges()[i];
+            var isDeleteObj : Boolean = false;
 
-            for (let j = 0; j < newUpdate.getChanges().length; j++) {
-                const augElement = newUpdate.getChanges()[j];
+            for (let k = 0; k < newUpdate.getDelets().length; k++) {
+                const element = newUpdate.getDelets()[k];
                 
-                // Replace the ones which are updated
-                if(changesElement.getFileID().isEqual(augElement.getFileID())){
-                    tempHead.getChanges()[i] = new Change(augElement.getFileID(), augElement.getContent()) ;
-                    newUpdate.getChanges().splice(j,1);
+                isDeleteObj = changesElement.getFileID().isEqual(element.getFileID());
+
+                if(isDeleteObj){
+                    
+                    deletes.push(element);
+                    tempHead.getChanges().splice(i,1);
+                }
+                
+            }
+
+            // if the change is a delete change then no need to modify the change
+            if(!isDeleteObj){
+                for (let j = 0; j < newUpdate.getChanges().length; j++) {
+                    const augElement = newUpdate.getChanges()[j];
+                    
+                    // Replace the ones which are updated
+                    if(changesElement.getFileID().isEqual(augElement.getFileID())){
+                        tempHead.getChanges()[i] = new Change(augElement.getFileID(), augElement.getContent()) ;
+                        newUpdate.getChanges().splice(j,1);
+                    }
                 }
             }
+
         }
 
         // add the ones which are new
         for (let a = 0; a < newUpdate.getChanges().length; a++) {
-            const newMergeElement = newUpdate.getChanges()[a];
-            tempHead.getChanges().push(newMergeElement);
+            const newEle = newUpdate.getChanges()[a];
+            tempHead.getChanges().push(newEle);
         }
 
         // Create new head
-        var newHead : Update = new Update( newUpdate.getNewCid(), tempHead.getChanges(), tempHead.getDelets(), newUpdate.getOldCid());
+        var newHead : Update = new Update( newUpdate.getNewCid(), tempHead.getChanges(), deletes, newUpdate.getOldCid());
 
         // Commit to the data base
         CommitCache.put(newHead.getNewCid(),  new CommitDT(this.sid,  [newHead], this.getFileStatePairFromUpdate(newHead)));

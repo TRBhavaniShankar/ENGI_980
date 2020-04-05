@@ -28,7 +28,7 @@ export function initServerOperations() : [Cache<CommitID, CommitDT> , CommitID[]
     var rootCommitID : CommitID = new CommitID(Guid.create());
 
     // Create new directory
-    var changeAndFileStatePair : [Change, FileStatePair] = createDirectoryValueAndFileStatePair(user,"rwx",[]);
+    var changeAndFileStatePair : [Change, FileStatePair] = createDirectoryValueAndFileStatePair(user,"rwx");
     var rootChanges : Change[] = [changeAndFileStatePair[0]];
     var rootFileStatePair : FileStatePair = changeAndFileStatePair[1];
 
