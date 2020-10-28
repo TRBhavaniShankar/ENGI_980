@@ -1,0 +1,20 @@
+<html>
+    <head>
+        <script
+        src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+        <link href="/assets/styles.css" rel="stylesheet" type="text/css"/>
+        <script type="text/javascript" src="/assets/ajaxCall.js"></script>
+    </head>
+    
+    <body>    
+            <h1 id="welcome-message"> Welcome to Global Internet File System </h1>
+            <form id="login-register"> 
+                <input type="text" name="username" placeholder="username" required  />  <br>
+                <input type="password" name="password" placeholder="password" required  />  <br>
+                <button type ="submit"> Login </button> <br>
+            </form>
+            <%- include('partials/ForgotPass-Reg') %>
+    </body>
+</html>

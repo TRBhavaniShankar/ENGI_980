@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <script
+        src="https://code.jquery.com/jquery-3.2.1.min.js"
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+        <link href="/assets/styles.css" rel="stylesheet" type="text/css"/>
+        <script type="text/javascript" src="/assets/ajaxCall.js"></script>
+    </head>
+    
+    <body>    
+            <form id="register"> 
+                <input type="text" id="newUser" name="newUser" placeholder="Please enter username" required  /> <br> 
+                <input type="password" id="pass" name="password" placeholder="Enter a password" required  /> <br>
+                <input type="password" id="repass" name="repassword" placeholder="Retype the password" required  /> <br>
+                <p>Password must contain 8 characters with captial and <br>
+                atleast any of these special characters !@#$%^&*()_+=-</p>
+                <input type="email" id="email" name="email" placeholder="Enter a vaild email ID" required  /><br>
+                <button type="submit"> Submit </button>
+            </form>
+    </body>
+</html>
